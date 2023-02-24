@@ -16,6 +16,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 //private과 protected과 public 구분해야 함.
 @Service //Bean에 등록하는 annotation. 기본으로 싱글톤으로 등록한다 (유일하게 하나만 등록해서 공유한다)
@@ -28,15 +31,6 @@ public class AdminService {
 
     @Value("${api.key}")
     private String ServiceKey;
-
-    JSONObject jsonObject;
-    JSONObject response;
-    String responseResult;
-    JSONObject body;
-    String bodyResult;
-    JSONObject items;
-    String itemResult;
-    JSONArray infoArr;
 
     public void createAdmin(dto dt) {
         mapper.createAdmin(dt);
@@ -80,34 +74,41 @@ public class AdminService {
             HttpStatus = urlConn.getResponseCode();
             urlConn.disconnect();
             System.out.println(sb.toString());
+            result = sb.toString();
 
             //Domain
             JSONParser jsonParser = new JSONParser(); //오류 해결해야 함.
-             jsonObject = (JSONObject) jsonParser.parse(line); //하나씩 출력. Parsing 문제.
-             response = (JSONObject) jsonObject.get("response");
-                 responseResult = (String)response.get("body");
-                log.info(responseResult); //로그 콘솔 출력.
-             body = (JSONObject) response.get("body");
-                 bodyResult = (String)body.get("items");
-                log.info(bodyResult);
-             items = (JSONObject) body.get("items");
-                 itemResult = (String)items.get("title");
-                log.info(itemResult);
-             infoArr = (JSONArray) items.get("item");
+             JSONObject obj = (JSONObject) jsonParser.parse(result); //하나씩 출력. Parsing 문제.
+             JSONObject parse_response = (JSONObject) obj.get("response");
+//                 responseResult = (String)response.get("body");
+//                log.info("responseResult" + responseResult); //로그 콘솔 출력.
+             JSONObject parse_body = (JSONObject) parse_response.get("body");
+//                 bodyResult = (String)body.get("items");
+//                log.info("bodyResult" + bodyResult);
+             JSONObject parse_items = (JSONObject) parse_body.get("items");
+//                 itemResult = (String)items.get("title");
+//                log.info("ItemResult" + itemResult);
+             JSONArray infoArr = (JSONArray) parse_items.get("item");
 
             //Unexpected character (<) at position 0. Parsing Error 해결해야 함.
             //오류(HttpStatus) 뜨면 오류 안내 페이지로
 
-
+            JSONObject tmp;
             for(int i=0; i<infoArr.size(); i++) { //for each으로 변경 고려.
-                JSONObject tmp = (JSONObject) infoArr.get(i);
+                tmp = (JSONObject) infoArr.get(i);
                 int stnId = (int) tmp.get("stnId");
                 String title = (String) tmp.get("title");
                 String tmFc = (String) tmp.get("tmFc");
                 int tmSeq = (int) tmp.get("tmSeq");
-                ReportAPIdto reportAPIdto1 = new ReportAPIdto(i, stnId, title, tmFc, tmSeq);
-                mapper.ReportAPICall(reportAPIdto1);
+
+                System.out.println("배열의" + i + "번째 요소");
+                System.out.println("stnId : " + stnId + "\ttitle : " + title + "\ttmFc : " + tmFc + "\ttmSeq : " + tmSeq);
+
+//                ReportAPIdto reportAPIdto1 = new ReportAPIdto(i, stnId, title, tmFc, tmSeq);
+//                mapper.ReportAPICall(reportAPIdto1);
             }
+
+
             /*
             {"response":{"header":{"resultCode":"00","resultMsg":"NORMAL_SERVICE"},
                 "body":{"dataType":"JSON","items":{"item":[
@@ -128,7 +129,7 @@ public class AdminService {
         }
     return HttpStatus;
     }
-
+/*
     public void TyphoonAnalyzed() {
         int TyphoonAnalyzed = 0; //태풍 주의보 : 1, 태풍 특보 : 2, 특보 구문 분석 후 숫자 코드 추가할 예정.
 
@@ -148,8 +149,18 @@ public class AdminService {
             else {
                 log.info("태풍이 발생하지 않았습니다.");
             }
+        }*/
+
+
+    public int ServerTime() {
+        LocalDate time = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        int formattedNow_1 = Integer.parseInt(time.format(formatter));
+
+        return formattedNow_1;
+
         }
     }
-}
+
 
 

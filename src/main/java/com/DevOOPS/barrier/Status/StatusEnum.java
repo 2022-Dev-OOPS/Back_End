@@ -1,5 +1,11 @@
 package com.DevOOPS.barrier.Status;
 
+import jdk.jfr.EventType;
+
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
 public enum StatusEnum {
 
     OK(200, "OK"),
@@ -14,5 +20,27 @@ public enum StatusEnum {
         this.statusCode = statusCode;
         this.code = code;
     }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    private static final Map<Integer, StatusEnum> lookup = new HashMap<>();
+
+    static {
+        for(StatusEnum e : EnumSet.allOf(StatusEnum.class)) {
+            lookup.put(e.getStatusCode(), e);
+        }
+    }
+
+    public static StatusEnum of(int code) {
+        return lookup.get(code);
+    }
+
+
 
 }

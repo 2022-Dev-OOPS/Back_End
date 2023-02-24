@@ -43,15 +43,21 @@ public class AdminController {
 //    public String getReportAPI() { return "ReportAPI"; }
 
     @GetMapping("/load")
-    public String postReportAPI() {
+    public void postReportAPI() {
         String tmTo = "20230220";
         String tmFrom = "20230223";
         int HttpStatus;
-        log.info("asdf");
+
+        tmTo = String.valueOf(adminService.ServerTime() - 3);
+        tmFrom = String.valueOf(adminService.ServerTime());
+
+        log.info(tmTo + ", " + tmFrom);
+
         HttpStatus = adminService.load_save(tmTo, tmFrom);
 //        adminService.TyphoonAnalyzed();
         log.info(String.valueOf(HttpStatus));
-        return "api"; //http status 통신 코드 받아서 "안내문" 출력.
-        //StatusEnum, message 추가
+
+        String StatusMessage = StatusEnum.of(HttpStatus).getCode();
+        log.info(StatusMessage);
     }
 }
