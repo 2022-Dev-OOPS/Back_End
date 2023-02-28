@@ -17,7 +17,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 //private과 protected과 public 구분해야 함.
@@ -32,6 +31,7 @@ public class AdminService {
     @Value("${api.key}")
     private String ServiceKey;
 
+    ReportAPIdto reportAPIdto1;
     public void createAdmin(dto dt) {
         mapper.createAdmin(dt);
     }
@@ -40,7 +40,7 @@ public class AdminService {
         mapper.deleteAdmin(adminId);
     }
 
-    public int load_save(String tmTo, String tmFrom) {
+    public ReportAPIdto load_save(String tmTo, String tmFrom) {
         String result = "";
         int HttpStatus = 0;
         try {
@@ -48,7 +48,7 @@ public class AdminService {
             urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + "=" + ServiceKey); /*Service Key*/
             urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
             urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
-            urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("XML", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
+            urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
             urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("184", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
             urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode(tmTo, "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
             urlBuilder.append("&" + URLEncoder.encode("toTmFc", "UTF-8") + "=" + URLEncoder.encode(tmFrom, "UTF-8")); /*시간(년월일) (데이터 생성주기 : 시간단위로 생성)*/
@@ -60,35 +60,39 @@ public class AdminService {
             System.out.println("Response Code : " + urlConn.getResponseCode());
 
             BufferedReader bf;
-            if(urlConn.getResponseCode() >= 200 && urlConn.getResponseCode() <= 300) {
+            if(urlConn.getResponseCode() >= 200 && urlConn.getResponseCode() <= 300) { //try catch 형태로 처리해야 함.
                 bf = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
             } else {
                 bf = new BufferedReader(new InputStreamReader(urlConn.getErrorStream()));
             }
             StringBuilder sb = new StringBuilder();
             String line;
+
             while ((line = bf.readLine()) != null) {
                 sb.append(line);
             }
             bf.close();
+
             HttpStatus = urlConn.getResponseCode();
             urlConn.disconnect();
-            System.out.println(sb.toString());
+
+            log.info(sb.toString()); //log.info로 수정.
             result = sb.toString();
 
             //Domain
             JSONParser jsonParser = new JSONParser(); //오류 해결해야 함.
              JSONObject obj = (JSONObject) jsonParser.parse(result); //하나씩 출력. Parsing 문제.
+                log.warn("result : " + result);
+            log.warn("obj : " + obj);
              JSONObject parse_response = (JSONObject) obj.get("response");
-//                 responseResult = (String)response.get("body");
-//                log.info("responseResult" + responseResult); //로그 콘솔 출력.
+            log.warn("response : " + parse_response);
              JSONObject parse_body = (JSONObject) parse_response.get("body");
-//                 bodyResult = (String)body.get("items");
-//                log.info("bodyResult" + bodyResult);
+            log.warn("body : " + parse_body);
              JSONObject parse_items = (JSONObject) parse_body.get("items");
-//                 itemResult = (String)items.get("title");
-//                log.info("ItemResult" + itemResult);
+                log.info("parse_items" + parse_items);
              JSONArray infoArr = (JSONArray) parse_items.get("item");
+                log.info("itemResult" + infoArr);
+
 
             //Unexpected character (<) at position 0. Parsing Error 해결해야 함.
             //오류(HttpStatus) 뜨면 오류 안내 페이지로
@@ -96,17 +100,20 @@ public class AdminService {
             JSONObject tmp;
             for(int i=0; i<infoArr.size(); i++) { //for each으로 변경 고려.
                 tmp = (JSONObject) infoArr.get(i);
-                int stnId = (int) tmp.get("stnId");
-                String title = (String) tmp.get("title");
-                String tmFc = (String) tmp.get("tmFc");
-                int tmSeq = (int) tmp.get("tmSeq");
+                int stnId = Integer.parseInt(String.valueOf( tmp.get("stnId")));
+                String title = String.valueOf( tmp.get("title"));
+                if (!title.contains("태풍")) {
+                    continue;
+                }
+                String tmFc = String.valueOf(tmp.get("tmFc"));
+                int tmSeq = Integer.parseInt(String.valueOf( tmp.get("tmSeq")));
 
-                System.out.println("배열의" + i + "번째 요소");
-                System.out.println("stnId : " + stnId + "\ttitle : " + title + "\ttmFc : " + tmFc + "\ttmSeq : " + tmSeq);
+                log.info("배열의 " + i+1 + "번째 요소");
+                log.info("stnId : " + stnId + "\ttitle : " + title + "\ttmFc : " + tmFc + "\ttmSeq : " + tmSeq + "\n");
 
-//                ReportAPIdto reportAPIdto1 = new ReportAPIdto(i, stnId, title, tmFc, tmSeq);
-//                mapper.ReportAPICall(reportAPIdto1);
-            }
+                reportAPIdto1 = new ReportAPIdto(i, stnId, title, tmFc, tmSeq);
+                mapper.ReportAPICall(reportAPIdto1);
+            } //특보 주의보 전처리해야 함. (태풍특보, 태풍주의보)
 
 
             /*
@@ -117,8 +124,7 @@ public class AdminService {
                     {"stnId":"184","title":"[특보] 제01-1호 : 2023.01.02.20:30 / 풍랑주의보 발표(*)","tmFc":202301022030,"tmSeq":1} ] }
                     ,"pageNo":1,"numOfRows":10,"totalCount":3}}}
              */
-            //도메인을 위 형식으로 (response 안에 body 안에 stnId, title, tmFc, tmSeq)
-            //도메인을 출력하면 위의 형식과 똑같음.
+            //ExceptionHandler 사용. //catch마다 새로운 오류 반환.
 
 
 
@@ -127,7 +133,9 @@ public class AdminService {
             // printstackTrace 필요 없음, 로그(Warning, Error)
             // 출력해야 함. 테스트 코드 작성 해서 exception마다 처리해야 함.
         }
-    return HttpStatus;
+    return reportAPIdto1; //서비스에서 만든 결과값을 리턴.
+        //필요한 값만 DTO로 만들어서 리턴해야. -> 성공한 경우.
+        //실패한 경우 -> Handler 조사. exception이 뜨면 controller로. throws.
     }
 /*
     public void TyphoonAnalyzed() {
@@ -161,6 +169,3 @@ public class AdminService {
 
         }
     }
-
-
-

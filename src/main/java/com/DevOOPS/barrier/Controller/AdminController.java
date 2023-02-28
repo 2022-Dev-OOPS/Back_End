@@ -47,17 +47,20 @@ public class AdminController {
         String tmTo = "20230220";
         String tmFrom = "20230223";
         int HttpStatus;
-
+        ReportAPIdto reportAPIdto;
         tmTo = String.valueOf(adminService.ServerTime() - 3);
         tmFrom = String.valueOf(adminService.ServerTime());
 
         log.info(tmTo + ", " + tmFrom);
 
-        HttpStatus = adminService.load_save(tmTo, tmFrom);
-//        adminService.TyphoonAnalyzed();
-        log.info(String.valueOf(HttpStatus));
 
-        String StatusMessage = StatusEnum.of(HttpStatus).getCode();
-        log.info(StatusMessage);
+        reportAPIdto = adminService.load_save(tmTo, tmFrom);
+
+//        HttpStatus = adminService.load_save(tmTo, tmFrom);
+////        adminService.TyphoonAnalyzed();
+//        log.info(String.valueOf(HttpStatus));
+//
+//        String StatusMessage = StatusEnum.of(HttpStatus).getCode();
+//        log.info(StatusMessage);
     }
 }

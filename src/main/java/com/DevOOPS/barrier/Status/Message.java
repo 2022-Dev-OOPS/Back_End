@@ -21,4 +21,6 @@ public class Message {
         this.message = message;
 
     }
+
+    //리턴을 메시지로. JSON 형태로 {statuscode 200 code ok message ""
 }
