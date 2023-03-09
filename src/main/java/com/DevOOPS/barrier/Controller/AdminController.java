@@ -44,17 +44,18 @@ public class AdminController {
 
     @GetMapping("/load")
     public void postReportAPI() {
-        String tmTo = "20230220";
-        String tmFrom = "20230223";
+        String tmTo = "20230302";
+        String tmFrom = "20230307";
         int HttpStatus;
         ReportAPIdto reportAPIdto;
-        tmTo = String.valueOf(adminService.ServerTime() - 3);
-        tmFrom = String.valueOf(adminService.ServerTime());
+//        tmTo = String.valueOf(adminService.ServerTime() - 3);
+//        tmFrom = String.valueOf(adminService.ServerTime());
+//
 
         log.info(tmTo + ", " + tmFrom);
 
 
-        reportAPIdto = adminService.load_save(tmTo, tmFrom);
+        adminService.load_save();
 
 //        HttpStatus = adminService.load_save(tmTo, tmFrom);
 ////        adminService.TyphoonAnalyzed();

@@ -9,6 +9,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -30,6 +31,7 @@ public class AdminService {
 
     @Value("${api.key}")
     private String ServiceKey;
+    String tmToday = String.valueOf(ServerTime());
 
     ReportAPIdto reportAPIdto1;
     public void createAdmin(dto dt) {
@@ -40,24 +42,27 @@ public class AdminService {
         mapper.deleteAdmin(adminId);
     }
 
-    public ReportAPIdto load_save(String tmTo, String tmFrom) {
+    @Scheduled(fixedDelay = 10000)
+    public void load_save() {
         String result = "";
         int HttpStatus = 0;
+
         try {
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList"); /*URL*/
             urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + "=" + ServiceKey); /*Service Key*/
             urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
             urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
-            urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("184", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
-            urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode(tmTo, "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
-            urlBuilder.append("&" + URLEncoder.encode("toTmFc", "UTF-8") + "=" + URLEncoder.encode(tmFrom, "UTF-8")); /*시간(년월일) (데이터 생성주기 : 시간단위로 생성)*/
+            urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("143", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
+            urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode(tmToday, "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
+            urlBuilder.append("&" + URLEncoder.encode("toTmFc", "UTF-8") + "=" + URLEncoder.encode(tmToday, "UTF-8")); /*시간(년월일) (데이터 생성주기 : 시간단위로 생성)*/
 
             URL url = new URL(urlBuilder.toString());
             HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
             urlConn.setRequestMethod("GET");
             urlConn.setRequestProperty("Content-type", "application/json");
-            System.out.println("Response Code : " + urlConn.getResponseCode());
+            log.info("Response Code : " + urlConn.getResponseCode());
+            log.info("오늘은 " + tmToday + "");
 
             BufferedReader bf;
             if(urlConn.getResponseCode() >= 200 && urlConn.getResponseCode() <= 300) { //try catch 형태로 처리해야 함.
@@ -102,9 +107,9 @@ public class AdminService {
                 tmp = (JSONObject) infoArr.get(i);
                 int stnId = Integer.parseInt(String.valueOf( tmp.get("stnId")));
                 String title = String.valueOf( tmp.get("title"));
-                if (!title.contains("태풍")) {
+               /* if (!title.contains("태풍")) {
                     continue;
-                }
+                }*/
                 String tmFc = String.valueOf(tmp.get("tmFc"));
                 int tmSeq = Integer.parseInt(String.valueOf( tmp.get("tmSeq")));
 
@@ -130,10 +135,8 @@ public class AdminService {
 
         } catch (Exception e) {
             log.info(e.toString());
-            // printstackTrace 필요 없음, 로그(Warning, Error)
-            // 출력해야 함. 테스트 코드 작성 해서 exception마다 처리해야 함.
         }
-    return reportAPIdto1; //서비스에서 만든 결과값을 리턴.
+//    return reportAPIdto1; //서비스에서 만든 결과값을 리턴.
         //필요한 값만 DTO로 만들어서 리턴해야. -> 성공한 경우.
         //실패한 경우 -> Handler 조사. exception이 뜨면 controller로. throws.
     }
@@ -165,7 +168,7 @@ public class AdminService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         int formattedNow_1 = Integer.parseInt(time.format(formatter));
 
-        return formattedNow_1;
+        return formattedNow_1-1;
 
         }
     }
