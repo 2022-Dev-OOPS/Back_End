@@ -13,5 +13,6 @@ public interface AdminMapper {
     public void createAdmin(dto dt);
     public void deleteAdmin (String adminId);
     List<dto> getAdminAll = null;
+
     public void ReportAPICall (ReportAPIdto apIdto);
 }
