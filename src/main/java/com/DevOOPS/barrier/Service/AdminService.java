@@ -34,6 +34,7 @@ public class AdminService {
     String tmToday = String.valueOf(ServerTime());
 
     ReportAPIdto reportAPIdto1;
+
     public void createAdmin(dto dt) {
         mapper.createAdmin(dt);
     }
@@ -43,7 +44,7 @@ public class AdminService {
     }
 
     @Scheduled(fixedDelay = 10000)
-    public void load_save() {
+    public ReportAPIdto load_save() {
         String result = "";
         int HttpStatus = 0;
 
@@ -98,26 +99,23 @@ public class AdminService {
              JSONArray infoArr = (JSONArray) parse_items.get("item");
                 log.info("itemResult" + infoArr);
 
-
-            //Unexpected character (<) at position 0. Parsing Error 해결해야 함.
-            //오류(HttpStatus) 뜨면 오류 안내 페이지로
-
             JSONObject tmp;
             for(int i=0; i<infoArr.size(); i++) { //for each으로 변경 고려.
                 tmp = (JSONObject) infoArr.get(i);
                 int stnId = Integer.parseInt(String.valueOf( tmp.get("stnId")));
                 String title = String.valueOf( tmp.get("title"));
-               /* if (!title.contains("태풍")) {
-                    continue;
-                }*/
+//                if (!title.contains("대설")) {
+//                    continue;
+//                }
                 String tmFc = String.valueOf(tmp.get("tmFc"));
                 int tmSeq = Integer.parseInt(String.valueOf( tmp.get("tmSeq")));
 
-                log.info("배열의 " + i+1 + "번째 요소");
-                log.info("stnId : " + stnId + "\ttitle : " + title + "\ttmFc : " + tmFc + "\ttmSeq : " + tmSeq + "\n");
+                log.info("배열의 " + i + "번째 요소");
+                log.info("stnId : " + stnId + "\ttitle : " + title + "\ttmFc : " + tmFc + "\ttmSeq : " + tmSeq);
 
                 reportAPIdto1 = new ReportAPIdto(i, stnId, title, tmFc, tmSeq);
                 mapper.ReportAPICall(reportAPIdto1);
+
             } //특보 주의보 전처리해야 함. (태풍특보, 태풍주의보)
 
 
@@ -136,7 +134,7 @@ public class AdminService {
         } catch (Exception e) {
             log.info(e.toString());
         }
-//    return reportAPIdto1; //서비스에서 만든 결과값을 리턴.
+    return reportAPIdto1; //서비스에서 만든 결과값을 리턴.
         //필요한 값만 DTO로 만들어서 리턴해야. -> 성공한 경우.
         //실패한 경우 -> Handler 조사. exception이 뜨면 controller로. throws.
     }
@@ -168,7 +166,7 @@ public class AdminService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         int formattedNow_1 = Integer.parseInt(time.format(formatter));
 
-        return formattedNow_1-1;
+        return formattedNow_1;
 
         }
     }

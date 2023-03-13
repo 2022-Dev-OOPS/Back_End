@@ -11,13 +11,14 @@ public class ReportAPIdto {
     private int tmSeq;
 
     public ReportAPIdto(int idx, int stnId, String title, String tmFc,
-                        int tmSeq) {
+                        int tmSeq ) {
         this.idx = idx;
         this.stnId = stnId;
         this.title = title;
         this.tmFc = tmFc;
         this.tmSeq = tmSeq;
     }
+
 
 
 }

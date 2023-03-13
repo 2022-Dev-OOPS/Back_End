@@ -55,8 +55,8 @@ public class AdminController {
         log.info(tmTo + ", " + tmFrom);
 
 
-        adminService.load_save();
-
+        reportAPIdto = adminService.load_save();
+        log.info("\nController return :: stnId : " + reportAPIdto.getStnId() + "\ttitle : " + reportAPIdto.getTitle() + "\ttmFc : " + reportAPIdto.getTmFc() + "\ttmSeq : " + reportAPIdto.getTmSeq() + "\n");
 //        HttpStatus = adminService.load_save(tmTo, tmFrom);
 ////        adminService.TyphoonAnalyzed();
 //        log.info(String.valueOf(HttpStatus));
