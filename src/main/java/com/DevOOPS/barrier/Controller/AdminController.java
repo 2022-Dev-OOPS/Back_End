@@ -54,7 +54,6 @@ public class AdminController {
 
         log.info(tmTo + ", " + tmFrom);
 
-
         reportAPIdto = adminService.load_save();
         log.info("\nController return :: stnId : " + reportAPIdto.getStnId() + "\ttitle : " + reportAPIdto.getTitle() + "\ttmFc : " + reportAPIdto.getTmFc() + "\ttmSeq : " + reportAPIdto.getTmSeq() + "\n");
 //        HttpStatus = adminService.load_save(tmTo, tmFrom);

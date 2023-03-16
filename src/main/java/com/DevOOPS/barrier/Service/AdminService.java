@@ -17,8 +17,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 //private과 protected과 public 구분해야 함.
 @Service //Bean에 등록하는 annotation. 기본으로 싱글톤으로 등록한다 (유일하게 하나만 등록해서 공유한다)
@@ -43,8 +45,8 @@ public class AdminService {
         mapper.deleteAdmin(adminId);
     }
 
-    @Scheduled(fixedDelay = 10000)
-    public ReportAPIdto load_save() {
+    @Scheduled(fixedDelay = 10000) //10초 컨트롤러에 넣는 방법을 고려해봐야 함.
+    public ReportAPIdto load_save() { //메서드 이름 바꾸는 것 고려.
         String result = "";
         int HttpStatus = 0;
 
@@ -104,21 +106,30 @@ public class AdminService {
                 tmp = (JSONObject) infoArr.get(i);
                 int stnId = Integer.parseInt(String.valueOf( tmp.get("stnId")));
                 String title = String.valueOf( tmp.get("title"));
-//                if (!title.contains("대설")) {
+//                if (!title.contains("건조")) {
 //                    continue;
 //                }
                 String tmFc = String.valueOf(tmp.get("tmFc"));
+                SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmm");
+                Date date = format.parse(tmFc);
+
+                System.out.println(date);
+
                 int tmSeq = Integer.parseInt(String.valueOf( tmp.get("tmSeq")));
 
                 log.info("배열의 " + i + "번째 요소");
                 log.info("stnId : " + stnId + "\ttitle : " + title + "\ttmFc : " + tmFc + "\ttmSeq : " + tmSeq);
 
-                reportAPIdto1 = new ReportAPIdto(i, stnId, title, tmFc, tmSeq);
+                reportAPIdto1 = new ReportAPIdto(stnId, title, date, tmSeq);
                 mapper.ReportAPICall(reportAPIdto1);
 
             } //특보 주의보 전처리해야 함. (태풍특보, 태풍주의보)
+            //tm_fc Date 형태로 보내야 함. -> db에 date 타입이 있음. 고려해볼 것.
+            //idx 바꿔야 함.
+            //데이터베이스에 저장할 때는 DAO로 바꿔야 함.
+            //IoT에 보낼 DTO를 따로 설정해야 함.
 
-
+            //
             /*
             {"response":{"header":{"resultCode":"00","resultMsg":"NORMAL_SERVICE"},
                 "body":{"dataType":"JSON","items":{"item":[
@@ -134,10 +145,14 @@ public class AdminService {
         } catch (Exception e) {
             log.info(e.toString());
         }
+
     return reportAPIdto1; //서비스에서 만든 결과값을 리턴.
         //필요한 값만 DTO로 만들어서 리턴해야. -> 성공한 경우.
         //실패한 경우 -> Handler 조사. exception이 뜨면 controller로. throws.
     }
+
+    //다른 6시간 메서드를 적어야 함. 컨트롤러단에서 되는지 확인해야 함.
+
 /*
     public void TyphoonAnalyzed() {
         int TyphoonAnalyzed = 0; //태풍 주의보 : 1, 태풍 특보 : 2, 특보 구문 분석 후 숫자 코드 추가할 예정.
