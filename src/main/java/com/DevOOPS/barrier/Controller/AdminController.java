@@ -1,30 +1,17 @@
 package com.DevOOPS.barrier.Controller;
+
 import com.DevOOPS.barrier.DTO.ReportAPIdto;
-import com.DevOOPS.barrier.DTO.dto;
 import com.DevOOPS.barrier.Exception.TyphoonSearchException;
 import com.DevOOPS.barrier.Service.AdminService;
 import com.DevOOPS.barrier.Status.Message;
 import com.DevOOPS.barrier.Status.StatusEnum;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.parser.JSONParser;
-import org.apache.ibatis.annotations.Param;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.AsyncRestTemplate;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 

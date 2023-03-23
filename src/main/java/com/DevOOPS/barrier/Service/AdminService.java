@@ -34,23 +34,21 @@ public class AdminService {
     ReportAPIdto reportAPIdto;
     @Autowired
     AdminMapper mapper;
-
+    String tmToday = String.valueOf(ServerTime());
+    ReportAPIdto reportAPIdto1;
+    List<ReportAPIdto> reportAPIdtoList = new ArrayList<>();
     @Value("${api.key}")
     private String ServiceKey;
-    String tmToday = String.valueOf(ServerTime());
+    private WebClient webClient = WebClient.create("https://f2333ebd-65f8-4202-a1a4-a727ebc010ad.mock.pstmn.io");
 
-    ReportAPIdto reportAPIdto1;
     public void createAdmin(dto dt) {
         mapper.createAdmin(dt);
     }
+
     public void deleteAdmin(String adminId) {
         dt.getAdminId().equals(adminId);
         mapper.deleteAdmin(adminId);
     }
-
-    private WebClient webClient = WebClient.create("https://f2333ebd-65f8-4202-a1a4-a727ebc010ad.mock.pstmn.io");
-
-    List<ReportAPIdto> reportAPIdtoList = new ArrayList<>();
 
 //    @Scheduled(fixedDelay = 360000) //1시간마다 불러옴.
     public List<ReportAPIdto> load_save() throws TyphoonSearchException {
