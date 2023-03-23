@@ -5,10 +5,10 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-public class ReportAPIdto {
+public class ReportAPIdto { //front.
     private int stnId;
     private String title;
-    private Date tmFc;
+    private Date tmFc; //날짜
     private int tmSeq;
 
     public ReportAPIdto(int stnId, String title, Date tmFc,

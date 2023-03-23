@@ -1,7 +1,9 @@
 package com.DevOOPS.barrier.Controller;
 import com.DevOOPS.barrier.DTO.ReportAPIdto;
 import com.DevOOPS.barrier.DTO.dto;
+import com.DevOOPS.barrier.Exception.TyphoonSearchException;
 import com.DevOOPS.barrier.Service.AdminService;
+import com.DevOOPS.barrier.Status.Message;
 import com.DevOOPS.barrier.Status.StatusEnum;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.parser.JSONParser;
@@ -9,9 +11,13 @@ import org.apache.ibatis.annotations.Param;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.AsyncRestTemplate;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,6 +25,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -27,40 +35,18 @@ import java.net.URLEncoder;
 public class AdminController {
     @Autowired
     AdminService adminService;
-//
-//    @RequestMapping(value = "/signup", method = RequestMethod.GET)
-//    public String getSignUp() {
-//        return "signup";
-//    }
-//
-//    @RequestMapping(value = "/signup", method = RequestMethod.POST)
-//    public void postSignUp(dto dt) {
-//        adminService.createAdmin(dt);
-//
-//    }
-//
-//    @RequestMapping(value = "/api", method = RequestMethod.GET)
-//    public String getReportAPI() { return "ReportAPI"; }
 
     @GetMapping("/load")
-    public void postReportAPI() {
-        String tmTo = "20230302";
-        String tmFrom = "20230307";
-        int HttpStatus;
-        ReportAPIdto reportAPIdto;
-//        tmTo = String.valueOf(adminService.ServerTime() - 3);
-//        tmFrom = String.valueOf(adminService.ServerTime());
-//
+    public Message postReportAPI() throws TyphoonSearchException {
+        List<ReportAPIdto> reportAPIdtoResultList = new ArrayList<>();
 
-        log.info(tmTo + ", " + tmFrom);
-
-        reportAPIdto = adminService.load_save();
-        log.info("\nController return :: stnId : " + reportAPIdto.getStnId() + "\ttitle : " + reportAPIdto.getTitle() + "\ttmFc : " + reportAPIdto.getTmFc() + "\ttmSeq : " + reportAPIdto.getTmSeq() + "\n");
-//        HttpStatus = adminService.load_save(tmTo, tmFrom);
-////        adminService.TyphoonAnalyzed();
-//        log.info(String.valueOf(HttpStatus));
-//
-//        String StatusMessage = StatusEnum.of(HttpStatus).getCode();
-//        log.info(StatusMessage);
+        reportAPIdtoResultList = adminService.load_save();
+        Message message = new Message(StatusEnum.OK,"성공",reportAPIdtoResultList); //IoT 서버와 연결했을 때 Http 통신 코드를 받아와서 적을 것.
+        return message;
     }
-}
+        @ExceptionHandler({TyphoonSearchException.class})
+        public Message handleException(Exception ex) {
+            log.warn(ex.toString());
+            return new Message(); //404에러
+        }
+    }
