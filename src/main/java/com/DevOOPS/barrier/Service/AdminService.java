@@ -106,7 +106,7 @@ public class AdminService {
 
 
             JSONObject tmp;
-            List<WallDTO> wallDTOList = new ArrayList<WallDTO>();
+            List<WallDTO> wallDTOList = new ArrayList<WallDTO> ();
 
 
             for (int i = 0; i < infoArr.size(); i++) { //for each으로 변경 고려.
