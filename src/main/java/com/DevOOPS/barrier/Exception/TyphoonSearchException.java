@@ -1,5 +1,6 @@
 package com.DevOOPS.barrier.Exception;
 
+import com.DevOOPS.barrier.DTO.ToIoTDataDTO;
 import com.DevOOPS.barrier.Status.Message;
 
 public class TyphoonSearchException extends Exception {
@@ -8,6 +9,6 @@ public class TyphoonSearchException extends Exception {
     }
 
     public TyphoonSearchException() {
-        ;
+
     }
 }

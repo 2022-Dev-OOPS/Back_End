@@ -3,6 +3,7 @@ package com.DevOOPS.barrier;
 import com.DevOOPS.barrier.DTO.dto;
 import com.DevOOPS.barrier.Mapper.AdminMapper;
 import org.junit.jupiter.api.Test;
+import org.mockserver.integration.ClientAndServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.ComponentScan;
 class BarrierApplicationTests {
 @Autowired
 	private AdminMapper aMapper;
+	private ClientAndServer mockServer;
 
 	@Test
 	void contextLoads() {
