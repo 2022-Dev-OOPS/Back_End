@@ -1,8 +1,6 @@
 package com.DevOOPS.barrier.Controller;
 
 import com.DevOOPS.barrier.DTO.ReportAPIdto;
-import com.DevOOPS.barrier.DTO.ToIoTDataDTO;
-import com.DevOOPS.barrier.DTO.WallDTO;
 import com.DevOOPS.barrier.Exception.TyphoonSearchException;
 import com.DevOOPS.barrier.Service.AdminService;
 import com.DevOOPS.barrier.Status.Message;
@@ -28,16 +26,9 @@ public class AdminController {
     @GetMapping("/load")
     public Message postReportAPI() throws TyphoonSearchException {
         List<ReportAPIdto> reportAPIdtoResultList = new ArrayList<>();
+
         reportAPIdtoResultList = adminService.load_save();
         Message message = new Message(StatusEnum.OK,"성공",reportAPIdtoResultList); //IoT 서버와 연결했을 때 Http 통신 코드를 받아와서 적을 것.
-        return message;
-    }
-
-    @GetMapping("/IoT")
-    public Message postIoTReportAPI() throws TyphoonSearchException {
-        List<WallDTO> wallDTOList = new ArrayList<WallDTO>();
-        wallDTOList = adminService.IoTReportAPI();
-        Message message = new Message(StatusEnum.OK, "IoT 서버와 통신 완료", wallDTOList);
         return message;
     }
         @ExceptionHandler({TyphoonSearchException.class})
