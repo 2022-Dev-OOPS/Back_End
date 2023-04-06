@@ -1,5 +1,6 @@
 package com.DevOOPS.barrier.Status;
 
+import jdk.jshell.Snippet;
 import lombok.Data;
 
 @Data
@@ -13,6 +14,11 @@ public class Message {
         this.status = StatusEnum.NOT_FOUND;
         this.data = null;
         this.message = "데이터를 찾을 수 없습니다.";
+    }
+
+    public Message(StatusEnum status, String message) {
+        this.status = status;
+        this.message = message;
     }
 
     public Message(StatusEnum status, String message, Object data) {

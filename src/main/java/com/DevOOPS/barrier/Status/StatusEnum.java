@@ -21,6 +21,7 @@ public enum StatusEnum {
         this.code = code;
     }
 
+
     public int getStatusCode() {
         return statusCode;
     }

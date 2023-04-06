@@ -4,6 +4,7 @@ import com.DevOOPS.barrier.DTO.ReportAPIdto;
 import com.DevOOPS.barrier.DTO.TyphoonInfoDTO;
 import com.DevOOPS.barrier.DTO.WallDTO;
 import com.DevOOPS.barrier.DTO.dto;
+import com.DevOOPS.barrier.Exception.TyphoonInfoNullException;
 import com.DevOOPS.barrier.Exception.TyphoonSearchException;
 import com.DevOOPS.barrier.Mapper.AdminMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -280,7 +281,7 @@ public class AdminService {
         return wallDTOList;
     }
 
-    public List<TyphoonInfoDTO> PostTyphoonInfo(String date) throws TyphoonSearchException {
+    public List<TyphoonInfoDTO> PostTyphoonInfo(String date) throws TyphoonSearchException, TyphoonInfoNullException {
         List<TyphoonInfoDTO> typhoonInfoDTOList;
         try {
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/TyphoonInfoService/getTyphoonInfo"); /*URL*/
@@ -371,9 +372,15 @@ public class AdminService {
             throw new RuntimeException(e);
         } catch (ParseException e) {
             throw new RuntimeException(e);
+        } catch (NullPointerException e) {
+            throw new TyphoonInfoNullException("NullPointerException : 비어있는 데이터에 접근하였습니다.");
+        } catch (Exception e) {
+            throw new TyphoonSearchException("검색된 데이터가 없습니다.");
         }
+
         return typhoonInfoDTOList;
     }
+
     public int ServerTime() {
         LocalDate time = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");

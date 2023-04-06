@@ -1,13 +1,17 @@
 package com.DevOOPS.barrier.Controller;
 
 import com.DevOOPS.barrier.DTO.ReportAPIdto;
+import com.DevOOPS.barrier.DTO.TyphoonInfoDTO;
 import com.DevOOPS.barrier.DTO.WallDTO;
+import com.DevOOPS.barrier.Exception.TyphoonInfoNullException;
 import com.DevOOPS.barrier.Exception.TyphoonSearchException;
 import com.DevOOPS.barrier.Service.AdminService;
 import com.DevOOPS.barrier.Status.Message;
 import com.DevOOPS.barrier.Status.StatusEnum;
+import jdk.jshell.Snippet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.jdbc.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,9 +43,12 @@ public class AdminController {
     }
 
     @GetMapping("TyphoonInfo")
-    public String postTyphoonInfo(@RequestParam("date")String date) throws TyphoonSearchException {
-        adminService.PostTyphoonInfo(date);
-        return "OK";
+    public Message postTyphoonInfo(@RequestParam("date")String date) throws TyphoonSearchException, TyphoonInfoNullException {
+        List<TyphoonInfoDTO> typhoonInfoDTOList = new ArrayList<TyphoonInfoDTO>();
+        typhoonInfoDTOList = adminService.PostTyphoonInfo(date);
+        Message message = new Message(StatusEnum.OK, "Successful post TyphoonInfo.", typhoonInfoDTOList);
+
+        return message;
 
     }
         @ExceptionHandler({TyphoonSearchException.class})
@@ -49,4 +56,9 @@ public class AdminController {
             log.warn(ex.toString());
             return new Message(); //404에러
         }
+
+        @ExceptionHandler({TyphoonInfoNullException.class})
+        public Message TyphoonInfoNullHandleException(Exception ex) {
+            return new Message(StatusEnum.INTERNAL_SERVER_ERROR, "비어있는 데이터에 접근하였습니다.");
+    }
     }
