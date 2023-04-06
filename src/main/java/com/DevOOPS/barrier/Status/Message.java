@@ -10,9 +10,9 @@ public class Message {
     private Object data;
 
     public Message() {
-        this.status = StatusEnum.BAD_REQUEST;
+        this.status = StatusEnum.NOT_FOUND;
         this.data = null;
-        this.message = "에러";
+        this.message = "데이터를 찾을 수 없습니다.";
     }
 
     public Message(StatusEnum status, String message, Object data) {
