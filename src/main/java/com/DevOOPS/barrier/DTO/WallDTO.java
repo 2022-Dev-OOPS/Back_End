@@ -6,11 +6,13 @@ import lombok.ToString;
 @ToString
 @Data
 public class WallDTO {
-    private boolean isCommandWall;
+    private boolean wallAlertActivation;
+    private boolean wallAlertDeactivation;
     private int stnId;
 
-    public WallDTO(boolean isCommandWall, int stnId) {
-        this.isCommandWall = isCommandWall;
+    public WallDTO(boolean wallAlertActivation, boolean wallAlertDeactivation, int stnId) {
+        this.wallAlertActivation = wallAlertActivation;
+        this.wallAlertDeactivation = wallAlertDeactivation;
         this.stnId = stnId;
     }
 }

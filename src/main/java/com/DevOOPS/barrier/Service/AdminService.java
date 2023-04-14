@@ -15,6 +15,7 @@ import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,9 +29,7 @@ import java.net.*;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 //private과 protected과 public 구분해야 함.
 @Service //Bean에 등록하는 annotation. 기본으로 싱글톤으로 등록한다 (유일하게 하나만 등록해서 공유한다)
@@ -46,10 +45,9 @@ public class AdminService {
     @Value("${api.key}")
     private String ServiceKey;
 
-    @Value("${api.EncodedKey")
-    private String EncodedServiceKey;
-    private WebClient webClient = WebClient.create("http://192.168.0.20:8080/data");
-    //192.168.0.20:8080/data
+    @Value("${api.enterAddress}")
+    private String enterAddress;
+    private WebClient webClient = WebClient.create(enterAddress);
 
     public void createAdmin(dto dt) {
         mapper.createAdmin(dt);
@@ -65,12 +63,12 @@ public class AdminService {
         int HttpStatus = 0;
         try {
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList"); /*URL*/
-            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + "=" + ServiceKey); /*Service Key*/
+            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8")  + ServiceKey); /*Service Key*/
             urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
             urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
             urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("143", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
-            urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode("20230329", "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
+            urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode("20230405", "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
             urlBuilder.append("&" + URLEncoder.encode("toTmFc", "UTF-8") + "=" + URLEncoder.encode(tmToday, "UTF-8")); /*시간(년월일) (데이터 생성주기 : 시간단위로 생성)*/
 
             URL url = new URL(urlBuilder.toString());
@@ -115,17 +113,12 @@ public class AdminService {
 
 
             JSONObject tmp;
-            List<WallDTO> wallDTOList = new ArrayList<WallDTO> ();
 
 
             for (int i = 0; i < infoArr.size(); i++) { //for each으로 변경 고려.
                 tmp = (JSONObject) infoArr.get(i);
                 int stnId = Integer.parseInt(String.valueOf(tmp.get("stnId")));
                 String title = String.valueOf(tmp.get("title"));
-//                if (!title.contains("태풍")) {
-//                    continue;
-//
-//                }
                 String tmFc = String.valueOf(tmp.get("tmFc"));
                 SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmm");
                 Date date = format.parse(tmFc);
@@ -141,7 +134,6 @@ public class AdminService {
                 reportAPIdto1 = new ReportAPIdto(stnId, title, date, tmSeq, regionData);
                 mapper.ReportAPICall(reportAPIdto1); //mapper 클래스에 사용. //dao로 바꿔야 함.
 
-                wallDTOList.add(new WallDTO(true, stnId));
                 reportAPIdtoList.add(new ReportAPIdto(stnId, title, date, tmSeq, regionData));
 
             }
@@ -154,19 +146,6 @@ public class AdminService {
                     {"stnId":"184","title":"[특보] 제01-1호 : 2023.01.02.20:30 / 풍랑주의보 발표(*)","tmFc":202301022030,"tmSeq":1} ] }
                     ,"pageNo":1,"numOfRows":10,"totalCount":3}}}
              */
-            for (WallDTO wallDTO : wallDTOList) {
-                log.info(wallDTO.toString());
-            }
-
-            Mono<String> response = webClient.post()
-                    .uri("/test")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromValue(wallDTOList))
-                    .retrieve()
-                    .bodyToMono(String.class);
-
-            String responseBody = response.block();
-            log.info(responseBody);
 
         } catch (Exception e) {
             throw new TyphoonSearchException("검색된 데이터가 없습니다.");
@@ -176,20 +155,26 @@ public class AdminService {
         return reportAPIdtoList;
     } //to FE
 
+
     //to IoT
+    @Scheduled(fixedDelay = 10000)
     public List<WallDTO> IoTReportAPI() throws TyphoonSearchException {
+        System.out.println("시작합니다");
         String result = "";
         String excludeWord = "강풍";
+        String Activated = "발표";
+        String Deactivated = "해제";
+
         int HttpStatus = 0;
         List<WallDTO> wallDTOList = null;
         try {
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList"); /*URL*/
-            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + "=" + ServiceKey); /*Service Key*/
+            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8")  + ServiceKey); /*Service Key*/
             urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
             urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
             urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("143", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
-            urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode("20230329", "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
+            urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode("20230406", "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
             urlBuilder.append("&" + URLEncoder.encode("toTmFc", "UTF-8") + "=" + URLEncoder.encode(tmToday, "UTF-8")); /*시간(년월일) (데이터 생성주기 : 시간단위로 생성)*/
 
             URL url = new URL(urlBuilder.toString());
@@ -242,26 +227,26 @@ public class AdminService {
                 tmp = (JSONObject) infoArr.get(i);
                 int stnId = Integer.parseInt(String.valueOf(tmp.get("stnId")));
                 String title = String.valueOf(tmp.get("title"));
-                if (!title.contains(excludeWord)) {
-                    wallDTOList.add(new WallDTO(false, stnId));
-                    continue;
-                }
+//                if (title.contains(excludeWord) && title.contains(Activated)) {
+//                    wallDTOList.add(new WallDTO(true, false, stnId));
+//                } else if (title.contains(excludeWord) && title.contains(Deactivated)) {
+//                    wallDTOList.add(new WallDTO(false, true, stnId));
+//                } else continue;
                 String tmFc = String.valueOf(tmp.get("tmFc"));
                 SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmm");
                 Date date = format.parse(tmFc);
 
-                System.out.println(date);
-
                 int tmSeq = Integer.parseInt(String.valueOf(tmp.get("tmSeq")));
-                wallDTOList.add(new WallDTO(true, stnId));
             }
+
+            Collections.reverse(wallDTOList);
 
             for (WallDTO wallDTO : wallDTOList) {
                 log.info(wallDTO.toString());
             }
 
             Mono<String> response = webClient.post()
-                    .uri("/")
+                    .uri("")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(BodyInserters.fromValue(wallDTOList))
                     .retrieve()
@@ -296,7 +281,7 @@ public class AdminService {
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Content-type", "application/json");
             log.info("Response Code : " + conn.getResponseCode());
-            log.info("오늘은 " + tmToday + "");
+            log.info("오늘은 date = " + date + "");
 
             BufferedReader rd;
             if (conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
@@ -361,6 +346,16 @@ public class AdminService {
             for (TyphoonInfoDTO typhoonInfoDTO : typhoonInfoDTOList) {
                 log.info(typhoonInfoDTO.toString());
             }
+
+            Mono<String> response = webClient.post()
+                    .uri("/test")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(typhoonInfoDTOList))
+                    .retrieve()
+                    .bodyToMono(String.class);
+
+            String responseBody = response.block();
+            log.info(responseBody);
 
         } catch (ProtocolException e) {
             throw new RuntimeException(e);
