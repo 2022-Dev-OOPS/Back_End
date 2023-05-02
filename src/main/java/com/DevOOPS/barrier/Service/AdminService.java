@@ -31,6 +31,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+
 //private과 protected과 public 구분해야 함.
 @Service //Bean에 등록하는 annotation. 기본으로 싱글톤으로 등록한다 (유일하게 하나만 등록해서 공유한다)
 @Slf4j
@@ -44,6 +45,7 @@ public class AdminService {
     List<ReportAPIdto> reportAPIdtoList = new ArrayList<>();
     @Value("${api.key}")
     private String ServiceKey;
+
 
     @Value("${api.enterAddress}")
     private String enterAddress;
@@ -137,6 +139,13 @@ public class AdminService {
                 reportAPIdtoList.add(new ReportAPIdto(stnId, title, date, tmSeq, regionData));
 
             }
+            //Unexpected character (<) at position 0. Parsing Error 해결해야 함.
+            //오류(HttpStatus) 뜨면 오류 안내 페이지로
+
+                int stnId = (int) tmp.get("stnId");
+                String title = (String) tmp.get("title");
+                String tmFc = (String) tmp.get("tmFc");
+                int tmSeq = (int) tmp.get("tmSeq");
 
             /*
             {"response":{"header":{"resultCode":"00","resultMsg":"NORMAL_SERVICE"},

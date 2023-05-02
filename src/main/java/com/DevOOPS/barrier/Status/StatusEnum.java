@@ -1,5 +1,6 @@
 package com.DevOOPS.barrier.Status;
 
+
 import jdk.jfr.EventType;
 
 import java.util.EnumSet;
@@ -21,7 +22,6 @@ public enum StatusEnum {
         this.code = code;
     }
 
-
     public int getStatusCode() {
         return statusCode;
     }
@@ -41,7 +41,5 @@ public enum StatusEnum {
     public static StatusEnum of(int code) {
         return lookup.get(code);
     }
-
-
 
 }
