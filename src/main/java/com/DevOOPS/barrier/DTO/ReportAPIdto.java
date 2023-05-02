@@ -2,22 +2,26 @@ package com.DevOOPS.barrier.DTO;
 
 import lombok.Data;
 
+import java.util.Date;
+
 @Data
-public class ReportAPIdto {
-    private int idx;
+public class ReportAPIdto { //front.
     private int stnId;
     private String title;
-    private String tmFc;
+    private Date tmFc; //날짜
     private int tmSeq;
 
-    public ReportAPIdto(int idx, int stnId, String title, String tmFc,
-                        int tmSeq) {
-        this.idx = idx;
+    private String regionData;
+
+    public ReportAPIdto(int stnId, String title, Date tmFc,
+                        int tmSeq, String regionData ) {
         this.stnId = stnId;
         this.title = title;
         this.tmFc = tmFc;
         this.tmSeq = tmSeq;
+        this.regionData = regionData;
     }
+
 
 
 }
