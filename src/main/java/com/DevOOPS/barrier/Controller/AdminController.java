@@ -26,7 +26,7 @@ public class AdminController {
     @Autowired
     AdminService adminService;
 
-    @GetMapping("/load") //예 특보 test
+    @GetMapping("/load") //예 특보 test test
     public Message postReportAPI() throws TyphoonSearchException {
         List<ReportAPIdto> reportAPIdtoResultList = new ArrayList<>();
 
