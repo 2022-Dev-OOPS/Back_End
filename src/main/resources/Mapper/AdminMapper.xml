@@ -8,13 +8,16 @@
         INSERT INTO admin(admin_id, admin_password)
         VALUES(#{adminId}, #{adminPassword})
     </insert>
-    <delete id="deleteAdmin" parameterType="string">
+    <delete id="deleteAdmin" parameterType="java.lang.String">
         DELETE FROM admin WHERE admin_id = #{adminId}
     </delete>
     <insert id="ReportAPICall" parameterType="com.DevOOPS.barrier.DTO.ReportAPIdto">
-        INSERT INTO TyphoonAPI(idx, stnId, title, tmFc, tmSeq)
-        VALUES(#{idx}, #{stnId}, #{title}, #{tmFc}, #{tmSeq})
+        INSERT INTO TyphoonAPI(stn_id, tm_Fc, tm_Seq, regionData, title1, title2)
+        VALUES(#{stnId}, #{tmFc}, #{tmSeq}, #{regionData}, #{title1}, #{title2})
     </insert>
+    <select id="RegionData" resultType="java.lang.String" parameterType="java.lang.Integer">
+        SELECT REGION FROM Region WHERE STN_ID = ${stnId}
+    </select>
 
 
 
