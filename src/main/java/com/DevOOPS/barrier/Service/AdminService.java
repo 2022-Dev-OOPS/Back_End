@@ -154,7 +154,6 @@ public class AdminService {
              */
 
         } catch (Exception e) {
-            log.info(e.toString());
             throw new TyphoonSearchException("검색된 데이터가 없습니다.");
 
         }
