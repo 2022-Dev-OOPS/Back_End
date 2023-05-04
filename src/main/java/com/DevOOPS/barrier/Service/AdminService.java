@@ -70,7 +70,7 @@ public class AdminService {
             urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
             urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("143", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
-            urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode("20230405", "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
+            urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode("20230429", "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
             urlBuilder.append("&" + URLEncoder.encode("toTmFc", "UTF-8") + "=" + URLEncoder.encode(tmToday, "UTF-8")); /*시간(년월일) (데이터 생성주기 : 시간단위로 생성)*/
 
             URL url = new URL(urlBuilder.toString());
@@ -121,6 +121,8 @@ public class AdminService {
                 tmp = (JSONObject) infoArr.get(i);
                 int stnId = Integer.parseInt(String.valueOf(tmp.get("stnId")));
                 String title = String.valueOf(tmp.get("title"));
+                String []tokens = title.split("/");
+
                 String tmFc = String.valueOf(tmp.get("tmFc"));
                 SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmm");
                 Date date = format.parse(tmFc);
@@ -131,21 +133,16 @@ public class AdminService {
                 String regionData = mapper.RegionData(stnId);
 
                 log.info("배열의 " + i + "번째 요소");
-                log.info("stnId : " + stnId + "\ttitle : " + title + "\ttmFc : " + date + "\ttmSeq : " + tmSeq + "\tregion : " + regionData);
+                log.info("stnId : " + stnId + "\ttitle1 : " + tokens[0] + "\ttitle2 : " + tokens[1]  + "\ttmFc : " + date + "\ttmSeq : " + tmSeq + "\tregion : " + regionData);
 
-                reportAPIdto1 = new ReportAPIdto(stnId, title, date, tmSeq, regionData);
+                reportAPIdto1 = new ReportAPIdto(stnId, date, tmSeq, regionData, tokens[0], tokens[1]);
                 mapper.ReportAPICall(reportAPIdto1); //mapper 클래스에 사용. //dao로 바꿔야 함.
 
-                reportAPIdtoList.add(new ReportAPIdto(stnId, title, date, tmSeq, regionData));
+                reportAPIdtoList.add(new ReportAPIdto(stnId, date, tmSeq, regionData,  tokens[0], tokens[1]));
 
             }
             //Unexpected character (<) at position 0. Parsing Error 해결해야 함.
             //오류(HttpStatus) 뜨면 오류 안내 페이지로
-
-                int stnId = (int) tmp.get("stnId");
-                String title = (String) tmp.get("title");
-                String tmFc = (String) tmp.get("tmFc");
-                int tmSeq = (int) tmp.get("tmSeq");
 
             /*
             {"response":{"header":{"resultCode":"00","resultMsg":"NORMAL_SERVICE"},
@@ -166,7 +163,7 @@ public class AdminService {
 
 
     //to IoT
-    @Scheduled(fixedDelay = 10000)
+//    @Scheduled(fixedDelay = 10000)
     public List<WallDTO> IoTReportAPI() throws TyphoonSearchException {
         System.out.println("시작합니다");
         String result = "";

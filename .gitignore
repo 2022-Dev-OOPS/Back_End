@@ -211,4 +211,5 @@ gradle-app.setting
 
 application.properties
 .DS_Store
+**/src/main/resources/*
 # End of https://www.toptal.com/developers/gitignore/api/windows,java,intellij,gradle
