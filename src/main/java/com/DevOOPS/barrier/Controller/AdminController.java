@@ -43,10 +43,9 @@ public class AdminController {
     }
 
     @GetMapping("TyphoonInfo")
-    public Message postTyphoonInfo(@RequestParam("date")String date) throws TyphoonSearchException, TyphoonInfoNullException {
-        List<TyphoonInfoDTO> typhoonInfoDTOList = new ArrayList<TyphoonInfoDTO>();
-        typhoonInfoDTOList = adminService.PostTyphoonInfo(date);
-        Message message = new Message(StatusEnum.OK, "Successful post TyphoonInfo.", typhoonInfoDTOList);
+    public Message postTyphoonInfo() throws TyphoonSearchException, TyphoonInfoNullException {
+        String TypPower = adminService.PostTyphoonInfo();
+        Message message = new Message(StatusEnum.OK, "Successful post TyphoonInfo.", TypPower);
 
         return message;
 
@@ -59,6 +58,7 @@ public class AdminController {
 
         @ExceptionHandler({TyphoonInfoNullException.class})
         public Message TyphoonInfoNullHandleException(Exception ex) {
+
             return new Message(StatusEnum.INTERNAL_SERVER_ERROR, "비어있는 데이터에 접근하였습니다.");
     }
     }
