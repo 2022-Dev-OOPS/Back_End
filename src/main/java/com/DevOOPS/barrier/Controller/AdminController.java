@@ -43,9 +43,10 @@ public class AdminController {
     }
 
     @GetMapping("TyphoonInfo")
-    public Message postTyphoonInfo() throws TyphoonSearchException, TyphoonInfoNullException {
-        String TypPower = adminService.PostTyphoonInfo();
-        Message message = new Message(StatusEnum.OK, "Successful post TyphoonInfo.", TypPower);
+    public Message postTyphoonInfo(@RequestParam("TypPower")int TypPower) throws TyphoonSearchException, TyphoonInfoNullException {
+        String TypPowerValue;
+        TypPowerValue = adminService.PostTyphoonInfo(TypPower);
+        Message message = new Message(StatusEnum.OK, "Successful post TyphoonInfo.", TypPowerValue);
 
         return message;
 
