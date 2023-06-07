@@ -1,11 +1,11 @@
 package com.DevOOPS.barrier.Controller;
 
-import com.DevOOPS.barrier.DTO.*;
+import com.DevOOPS.barrier.DTO.PastTypdto;
+import com.DevOOPS.barrier.DTO.TypListdto;
 import com.DevOOPS.barrier.Service.PastTypService;
 import com.DevOOPS.barrier.Status.Message;
 import com.DevOOPS.barrier.Status.StatusEnum;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.type.LocalDateType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -19,9 +19,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicReference;
 
 
 @RestController
@@ -44,13 +42,10 @@ public class PastTypController {
     private String power;
     @Autowired
     PastTypService pastTypService;
-    int Barrier_Order = 00;
-    String dangerLevel = "";
 
-    private String enterAdress;
-    private WebClient client = WebClient.create(enterAdress);
-
-
+    @Value("${api.enterAddress}")
+    private String enterAddress;
+    private WebClient client = WebClient.create(enterAddress);
 
     private int getRandomValue(int minIdx, int maxIdx){
         Random random = new Random();
@@ -73,7 +68,7 @@ public class PastTypController {
         log.info("count: " + String.valueOf(count));
         if (idx == 0 || count == 7) {
             int minIdx = 1;
-            int maxIdx = 50;
+            int maxIdx = 76;
             randomIdx = getRandomValue(minIdx, maxIdx);
             TypListdto typListdto = pastTypService.getTypList(randomIdx);
             if(typListdto == null){
@@ -141,8 +136,9 @@ public class PastTypController {
         {
             if(p.getAfter_time()<=24)
             {
+                log.info(p.toString());
                 try {
-                    p.getPower();
+                    p.getPower().equals("");
                 }catch (Exception e)
                 {
                     continue;
@@ -190,7 +186,7 @@ public class PastTypController {
             if(p.getAfter_time()<=24)
             {
                 try {
-                    p.getPower();
+                    p.getPower().equals("");
                 }catch (Exception e)
                 {
                     continue;
@@ -207,10 +203,15 @@ public class PastTypController {
             }
         }
 
-        Message message = new Message(StatusEnum.OK, "", danger);
+        Message message = new Message(StatusEnum.OK, "Successful", danger);
 
-        Mono<String> response = client.method(HttpMethod.POST).uri("http://192.168.200.103:9998/data").contentType(MediaType.APPLICATION_JSON).body(BodyInserters.fromValue(message)).
-                retrieve().bodyToMono(String.class);
+        Mono<String> response = client
+                .method(HttpMethod.POST)
+                .uri("")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(message))
+                .retrieve()
+                .bodyToMono(String.class);
         String responseBody = response.block();
         log.info(responseBody);
 

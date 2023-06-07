@@ -8,20 +8,10 @@ import com.DevOOPS.barrier.Exception.TyphoonSearchException;
 import com.DevOOPS.barrier.Service.AdminService;
 import com.DevOOPS.barrier.Status.Message;
 import com.DevOOPS.barrier.Status.StatusEnum;
-import com.sun.jna.NativeLibrary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import uk.co.caprica.vlcj.binding.support.runtime.RuntimeUtil;
-import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
-import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,11 +31,12 @@ public class AdminController {
         Message message = new Message(StatusEnum.OK,"성공",reportAPIdtoResultList); //IoT 서버와 연결했을 때 Http 통신 코드를 받아와서 적을 것.
         return message;
     }
-    @GetMapping("/IoT")
+    @PostMapping("/IoT")
     public Message postIoTReportAPI() throws TyphoonSearchException {
         List<WallDTO> wallDTOList = new ArrayList<WallDTO>();
-        wallDTOList = adminService.IoTReportAPI();
-        Message message = new Message(StatusEnum.OK, "IoT 서버와 통신 완료", wallDTOList);
+        WallDTO wallDTOResult = new WallDTO(false, false, 0);
+        wallDTOResult = adminService.IoTReportAPI();
+        Message message = new Message(StatusEnum.OK, "IoT 서버와 통신 완료", wallDTOResult);
         return message;
     }
 

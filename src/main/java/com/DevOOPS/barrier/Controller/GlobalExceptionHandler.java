@@ -2,7 +2,6 @@ package com.DevOOPS.barrier.Controller;
 
 import com.DevOOPS.barrier.DTO.ErrorDetails;
 import com.DevOOPS.barrier.Exception.ResourceNotFoundException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -25,4 +24,3 @@ public class  GlobalExceptionHandler {
         return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
-cqvw2

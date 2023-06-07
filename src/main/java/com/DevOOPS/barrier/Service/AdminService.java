@@ -72,7 +72,7 @@ public class AdminService {
             urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
             urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
-//            urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("143", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
+            urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("184", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
             urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode(minusTmToday, "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
             urlBuilder.append("&" + URLEncoder.encode("toTmFc", "UTF-8") + "=" + URLEncoder.encode(tmToday, "UTF-8")); /*시간(년월일) (데이터 생성주기 : 시간단위로 생성)*/
 
@@ -169,7 +169,7 @@ public class AdminService {
 
     //to IoT
 //    @Scheduled(fixedDelay = 10000)
-    public List<WallDTO> IoTReportAPI() throws TyphoonSearchException {
+    public WallDTO IoTReportAPI() throws TyphoonSearchException {
         System.out.println("시작합니다");
         String result = "";
         String excludeWord = "풍랑";
@@ -177,13 +177,15 @@ public class AdminService {
         String Deactivated = "해제";
 
         List<WallDTO> wallDTOList = null;
+        WallDTO wallDTOtemp = new WallDTO(false, false, 0);
+
         try {
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList"); /*URL*/
             urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8")  + ServiceKey); /*Service Key*/
             urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
             urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
-//            urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("143", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
+            urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("184", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
             urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode(minusTmToday, "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
             urlBuilder.append("&" + URLEncoder.encode("toTmFc", "UTF-8") + "=" + URLEncoder.encode(tmToday, "UTF-8")); /*시간(년월일) (데이터 생성주기 : 시간단위로 생성)*/
 
@@ -216,14 +218,10 @@ public class AdminService {
             //Domain
             JSONParser jsonParser = new JSONParser();
             JSONObject obj = (JSONObject) jsonParser.parse(result);
-            log.warn("result : " + result);
-            log.warn("obj : " + obj);
+
             JSONObject parse_response = (JSONObject) obj.get("response");
-            log.warn("response : " + parse_response);
             JSONObject parse_body = (JSONObject) parse_response.get("body");
-            log.warn("body : " + parse_body);
             JSONObject parse_items = (JSONObject) parse_body.get("items");
-            log.info("parse_items" + parse_items);
             JSONArray infoArr = (JSONArray) parse_items.get("item");
             log.info("itemResult" + infoArr);
 
@@ -245,26 +243,27 @@ public class AdminService {
                 String tmFc = String.valueOf(tmp.get("tmFc"));
                 SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmm");
                 Date date = format.parse(tmFc);
-
                 int tmSeq = Integer.parseInt(String.valueOf(tmp.get("tmSeq")));
             }
 
-            Collections.reverse(wallDTOList);
+//            Collections.reverse(wallDTOList); //오래된 날짜부터 최신 날짜 순.
 
             for (WallDTO wallDTO : wallDTOList) {
                 log.info(wallDTO.toString());
             }
 
+            wallDTOtemp = wallDTOList.get(0); //최신 해당 특보를 불러 옴.
+
             Mono<String> response = webClient.post()
                     .uri("")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromValue(wallDTOList))
+                    .body(BodyInserters.fromValue(wallDTOtemp))
                     .retrieve()
                     .bodyToMono(String.class);
 
-            String responseBody = response.block();
-            log.info(responseBody);
-
+//            String responseBody = response.block();
+//            log.info(responseBody);
+//
         } catch (NullPointerException e) {
             throw new TyphoonSearchException("검색된 데이터가 없습니다.");
 
@@ -273,9 +272,8 @@ public class AdminService {
             log.info(e.toString());
         }
 
-        return wallDTOList;
+        return wallDTOtemp;
     }
-
 
      public  List<TyphoonInfoDTO>  PostTyphoonInfo() throws TyphoonSearchException, TyphoonInfoNullException {
         List<TyphoonInfoDTO> typhoonInfoDTOList;
