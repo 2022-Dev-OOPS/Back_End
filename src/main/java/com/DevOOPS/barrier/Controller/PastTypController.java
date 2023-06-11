@@ -40,6 +40,8 @@ public class PastTypController {
     private int aftertime;
     private int typrad;
     private String power;
+
+    private String preWallUpDown = "wallAlertDeactivation";
     @Autowired
     PastTypService pastTypService;
 
@@ -154,7 +156,7 @@ public class PastTypController {
                 if(p.getPower().isEmpty()&&danger==0){
                     danger=0;
                 }
-                log.info("파워 : "+ p + " / 위험도 : " + danger);
+                log.info(" / 위험도 : " + danger + "파워 : "+ p);
             }
         }
         if(checkPoint==1)
@@ -167,11 +169,12 @@ public class PastTypController {
 
     @PostMapping("/information/iot")
     public Message getIotDanger(){
+        log.info("시작차수벽 : "+preWallUpDown);
         String danger = "wallAlertDeactivation";
         int point = 0;
-        log.info("이모티콘: "+presentDate.toString());
+        log.info("차수벽: "+presentDate.toString());
         presentDate=presentDate.minusHours(3);
-        log.info("이모티콘: "+presentDate.toString());
+        log.info("차수벽: "+presentDate.toString());
         List<PastTypdto> pastTypdtos = pastTypService.getPastTyp(presentDate);
         if(pastTypdtos.isEmpty())
         {
@@ -191,36 +194,37 @@ public class PastTypController {
                 {
                     continue;
                 }
-                if(p.getPower().equals("강")||p.getPower().equals("매우 강")||p.getPower().equals("초강력"))
+                if(p.getPower().equals("중")&&danger!="wallAlertActivation" || p.getPower().equals("강")||p.getPower().equals("매우 강")||p.getPower().equals("초강력"))
                 {
                     danger="wallAlertActivation";
                 }
-                if(p.getPower().equals("약")&&danger!="wallAlertActivation"||p.getPower().equals("중")&&danger!="wallAlertActivation" || p.getPower().isEmpty()&&danger!="wallAlertActivation")
+                if(p.getPower().equals("약")&&danger!="wallAlertActivation"|| p.getPower().isEmpty()&&danger!="wallAlertActivation")
                 {
                     danger="wallAlertDeactivation";
                 }
-                log.info("파워 : "+p + "차수벽 행동 지시 : " + danger);
+                log.info("차수벽 행동 지시 : " + danger + "파워 : "+p);
             }
         }
 
         Message message = new Message(StatusEnum.OK, "Successful", danger);
-
-        Mono<String> response = client
-                .method(HttpMethod.POST)
-                .uri("")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue(message))
-                .retrieve()
-                .bodyToMono(String.class);
-        String responseBody = response.block();
-        log.info(responseBody);
-
-
+        if(preWallUpDown!=danger) {
+            preWallUpDown = danger;
+            Mono<String> response = client
+                    .method(HttpMethod.POST)
+                    .uri(enterAddress)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(message))
+                    .retrieve()
+                    .bodyToMono(String.class);
+            String responseBody = response.block();
+            log.info(responseBody);
+        }
         if(point==1)
         {
             presentDate=presentDate.plusHours(3);
         }
         presentDate=presentDate.plusHours(3);
+        log.info("끝차수벽:"+preWallUpDown);
         return message;
     }
 }
