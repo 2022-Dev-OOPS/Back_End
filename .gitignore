@@ -15,8 +15,9 @@
 .gradle/
 build.gradle
 gradlew.bat
-Bradley
-setting.gradle
+gradle/
+settings.gradle
+gradlew
 
 S
 # AWS User-specific
