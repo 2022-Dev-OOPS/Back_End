@@ -1,4 +1,3 @@
-![image](https://github.com/2022-Dev-OOPS/Back_End/assets/86722532/e3140beb-34ad-485d-a3c6-6b7ed8a53bed)
 ![image](https://github.com/2022-Dev-OOPS/Back_End/assets/86722532/2c708d0a-7f16-4501-8fc8-0b3f5333c2f4)
 # Dev.OOPS! Back-End
 
