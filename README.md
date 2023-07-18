@@ -1,3 +1,5 @@
+![image](https://github.com/2022-Dev-OOPS/Back_End/assets/86722532/e3140beb-34ad-485d-a3c6-6b7ed8a53bed)
+![image](https://github.com/2022-Dev-OOPS/Back_End/assets/86722532/2c708d0a-7f16-4501-8fc8-0b3f5333c2f4)
 # Dev.OOPS! Back-End
 
 ## 파트 소개
@@ -5,6 +7,25 @@
 
 ## 주요 특징
 실시간으로 기상 정보를 받을 수 없다는 태풍의 특징에 기반하여, 본 프로젝트는 **가상 태풍 환경 서버**와 **실제 태풍 환경 서버**로 나누어 개발을 진행하였습니다.
+
+#ERD
+![image](https://github.com/2022-Dev-OOPS/Back_End/assets/86722532/97e656d8-bcce-49c4-ad68-c71de1d0156f)
+
+# 기술 스택 및 환경
+- Java 17
+- Framework : Springboot
+- DB : MariaDB
+- DB Server : AWS RDS
+- Log 관리 : Logback
+- SQL Mapper : Mybatis
+- 단위 테스트 : Junit5
+- 성능 테스트 : Jmeter
+- api-test : PostMan
+- lombok
+
+## 작동 과정
+
+
 # 가상 태풍 환경 서버
 1. 작성 필요
 2.
