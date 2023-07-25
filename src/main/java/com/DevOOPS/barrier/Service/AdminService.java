@@ -15,6 +15,7 @@ import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -31,9 +32,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-
-//private과 protected과 public 구분해야 함.
-@Service //Bean에 등록하는 annotation. 기본으로 싱글톤으로 등록한다 (유일하게 하나만 등록해서 공유한다)
+@Service
 @Slf4j
 public class AdminService {
     dto dt;
@@ -61,14 +60,11 @@ public class AdminService {
         dt.getAdminId().equals(adminId);
         mapper.deleteAdmin(adminId);
     }
-
-    public List<ReportAPIdto> load_save() throws TyphoonSearchException { //
-        String result = "";
-        List<ReportAPIdto> reportAPIdtoList = new ArrayList<>();
-
+    @Async
+    public StringBuilder apiServerRequest() throws TyphoonSearchException {
         try {
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList"); /*URL*/
-            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8")  + ServiceKey); /*Service Key*/
+            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + ServiceKey); /*Service Key*/
             urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
             urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
@@ -83,7 +79,7 @@ public class AdminService {
             conn.setRequestProperty("Content-type", "application/json");
             System.out.println("Response code: " + conn.getResponseCode());
             BufferedReader rd;
-            if(conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
+            if (conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
                 rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             } else {
                 rd = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
@@ -96,17 +92,30 @@ public class AdminService {
             rd.close();
             conn.disconnect();
 
+            return sb;
+        } catch (Exception e) {
+            log.info(e.toString());
+            throw new TyphoonSearchException("검색된 데이터가 없습니다.");
+        }
+    }
+    public List<ReportAPIdto> load_save () {//
+        String result = "";
+        List<ReportAPIdto> reportAPIdtoList = new ArrayList<>();
+
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb = apiServerRequest();
+
             result = sb.toString();
 
             log.info(result);
 
             JSONParser jsonParser = new JSONParser();
-            JSONObject obj =(JSONObject) jsonParser.parse(result); //하나씩 출력. Parsing 문제.
+            JSONObject obj = (JSONObject) jsonParser.parse(result); //하나씩 출력. Parsing 문제.
             JSONObject parse_response = (JSONObject) obj.get("response");
             JSONObject parse_body = (JSONObject) parse_response.get("body");
             JSONObject parse_items = (JSONObject) parse_body.get("items");
             JSONArray infoArr = (JSONArray) parse_items.get("item");
-
 
             JSONObject tmp = new JSONObject();
             int stnId;
@@ -121,9 +130,9 @@ public class AdminService {
                 tmp = (JSONObject) infoArr.get(i);
                 stnId = Integer.parseInt(String.valueOf(tmp.get("stnId")));
                 title = String.valueOf(tmp.get("title"));
-                String []tokens = title.split("/");
+                String[] tokens = title.split("/");
                 String WtrWrn = tokens[0];
-                String []WtrWrnName = WtrWrn.split(":");
+                String[] WtrWrnName = WtrWrn.split(":");
 
                 tmFc = String.valueOf(tmp.get("tmFc"));
                 SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmm");
@@ -132,12 +141,12 @@ public class AdminService {
                 tmSeq = Integer.parseInt(String.valueOf(tmp.get("tmSeq")));
                 regionData = mapper.RegionData(stnId);
 
-                log.info("region : " + regionData + "\t특보명 : " + WtrWrnName[0] + "\t특보 내용 : " + tokens[1]  + "\ttmFc : " + date);
+                log.info("region : " + regionData + "\t특보명 : " + WtrWrnName[0] + "\t특보 내용 : " + tokens[1] + "\ttmFc : " + date);
 
                 reportAPIdto1 = new ReportAPIdto(stnId, date, tmSeq, regionData, tokens[0], tokens[1]);
 //                mapper.ReportAPICall(reportAPIdto1); //mapper 클래스에 사용. //dao로 바꿔야 함.
 
-                reportAPIdtoList.add(new ReportAPIdto(stnId, date, tmSeq, regionData,  WtrWrnName[0], tokens[1]));
+                reportAPIdtoList.add(new ReportAPIdto(stnId, date, tmSeq, regionData, WtrWrnName[0], tokens[1]));
             }
             /*
             {"response":{"header":{"resultCode":"00","resultMsg":"NORMAL_SERVICE"},
@@ -150,22 +159,17 @@ public class AdminService {
 
         } catch (Exception e) {
             log.info(e.toString());
-            throw new TyphoonSearchException("검색된 데이터가 없습니다.");
-
         }
-
         return reportAPIdtoList;
-
-
     } //to FE
 
 
     //to IoT
 //    @Scheduled(fixedDelay = 10000)
-    public WallDTO IoTReportAPI() throws TyphoonSearchException {
+    public WallDTO IoTReportAPI() {
         System.out.println("시작합니다");
         String result = "";
-        String excludeWord = "풍랑";
+        String excludeWord = "호우";
         String Activated = "발표";
         String Deactivated = "해제";
 
@@ -173,37 +177,8 @@ public class AdminService {
         WallDTO wallDTOtemp = new WallDTO(false, false, 0);
 
         try {
-            StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList"); /*URL*/
-            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8")  + ServiceKey); /*Service Key*/
-            urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
-            urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
-            urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
-            urlBuilder.append("&" + URLEncoder.encode("stnId", "UTF-8") + "=" + URLEncoder.encode("184", "UTF-8")); /*지점코드 *하단 지점코드 자료 참조*/
-            urlBuilder.append("&" + URLEncoder.encode("fromTmFc", "UTF-8") + "=" + URLEncoder.encode(minusTmToday, "UTF-8")); /*시간(년월일)(데이터 생성주기 : 시간단위로 생성)*/
-            urlBuilder.append("&" + URLEncoder.encode("toTmFc", "UTF-8") + "=" + URLEncoder.encode(tmToday, "UTF-8")); /*시간(년월일) (데이터 생성주기 : 시간단위로 생성)*/
-
-            URL url = new URL(urlBuilder.toString());
-            HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-            urlConn.setRequestMethod("GET");
-            urlConn.setRequestProperty("Content-type", "application/json");
-            log.info("Response Code : " + urlConn.getResponseCode());
-            log.info("오늘은 " + tmToday + "");
-
-            BufferedReader bf;
-            if (urlConn.getResponseCode() >= 200 && urlConn.getResponseCode() <= 300) {
-                bf = new BufferedReader(new InputStreamReader(urlConn.getInputStream()));
-            } else {
-                bf = new BufferedReader(new InputStreamReader(urlConn.getErrorStream()));
-            }
             StringBuilder sb = new StringBuilder();
-            String line;
-
-            while ((line = bf.readLine()) != null) {
-                sb.append(line);
-            }
-            bf.close();
-
-            urlConn.disconnect();
+            sb = apiServerRequest();
 
             log.info(sb.toString());
             result = sb.toString();
@@ -211,7 +186,6 @@ public class AdminService {
             //Domain
             JSONParser jsonParser = new JSONParser();
             JSONObject obj = (JSONObject) jsonParser.parse(result);
-
             JSONObject parse_response = (JSONObject) obj.get("response");
             JSONObject parse_body = (JSONObject) parse_response.get("body");
             JSONObject parse_items = (JSONObject) parse_body.get("items");
@@ -239,7 +213,7 @@ public class AdminService {
                 int tmSeq = Integer.parseInt(String.valueOf(tmp.get("tmSeq")));
             }
 
-//            Collections.reverse(wallDTOList); //오래된 날짜부터 최신 날짜 순.
+            Collections.reverse(wallDTOList); //오래된 날짜부터 최신 날짜 순.
 
             for (WallDTO wallDTO : wallDTOList) {
                 log.info(wallDTO.toString());
@@ -253,22 +227,15 @@ public class AdminService {
                     .body(BodyInserters.fromValue(wallDTOtemp))
                     .retrieve()
                     .bodyToMono(String.class);
-
-//            String responseBody = response.block();
-//            log.info(responseBody);
-//
-        } catch (NullPointerException e) {
-            throw new TyphoonSearchException("검색된 데이터가 없습니다.");
-
         }
         catch (Exception e) {
             log.info(e.toString());
         }
-
         return wallDTOtemp;
     }
 
-     public  List<TyphoonInfoDTO>  PostTyphoonInfo() throws TyphoonSearchException, TyphoonInfoNullException {
+    @Async
+    public  List<TyphoonInfoDTO>  PostTyphoonInfo() throws TyphoonSearchException, TyphoonInfoNullException {
         List<TyphoonInfoDTO> typhoonInfoDTOList;
         String resultTypPower = "";
         try {
@@ -388,7 +355,7 @@ public class AdminService {
         int formattedNow_1 = Integer.parseInt(time.format(formatter));
 
         return formattedNow_1;
-        }
+    }
 
     public int MinusServerTime() {
         LocalDate minusTime = LocalDate.now();
@@ -397,5 +364,5 @@ public class AdminService {
         int formattedNow_2 = Integer.parseInt(minusTime.format(formatter));
 
         return formattedNow_2;
-        }
     }
+}
