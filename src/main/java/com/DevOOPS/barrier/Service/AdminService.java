@@ -66,7 +66,7 @@ public class AdminService {
         String result = "";
         List<ReportAPIdto> reportAPIdtoList = new ArrayList<>();
 
-        try {
+        try { //test
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList"); /*URL*/
             urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8")  + ServiceKey); /*Service Key*/
             urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
