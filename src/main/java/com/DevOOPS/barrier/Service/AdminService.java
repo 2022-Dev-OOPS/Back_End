@@ -100,7 +100,7 @@ public class AdminService {
             throw new TyphoonSearchException("검색된 데이터가 없습니다.");
         }
     }
-    public List<ReportAPIdto> load_save () {//
+    public List<ReportAPIdto> load_save () {//test
         String result = "";
         List<ReportAPIdto> reportAPIdtoList = new ArrayList<>();
 
