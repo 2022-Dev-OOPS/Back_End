@@ -18,7 +18,7 @@ gradlew.bat
 gradle/
 settings.gradle
 gradlew
-.github
+.github/
 
 S
 # AWS User-specific
