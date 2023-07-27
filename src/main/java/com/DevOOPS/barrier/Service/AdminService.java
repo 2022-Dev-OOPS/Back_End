@@ -38,17 +38,13 @@ import java.util.*;
 @Slf4j
 public class AdminService {
     dto dt;
-
     @Autowired
     AdminMapper mapper;
     String tmToday = String.valueOf(ServerTime());
     String minusTmToday = String.valueOf(MinusServerTime());
-
-
     ReportAPIdto reportAPIdto1;
     @Value("${api.key}")
     private String ServiceKey;
-
 
     @Value("${api.enterAddress}")
     private String enterAddress;
