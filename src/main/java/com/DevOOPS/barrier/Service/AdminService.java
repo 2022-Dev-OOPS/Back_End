@@ -1,9 +1,6 @@
 package com.DevOOPS.barrier.Service;
 
-import com.DevOOPS.barrier.DTO.ReportAPIdto;
-import com.DevOOPS.barrier.DTO.TyphoonInfoDTO;
-import com.DevOOPS.barrier.DTO.WallDTO;
-import com.DevOOPS.barrier.DTO.dto;
+import com.DevOOPS.barrier.DTO.*;
 import com.DevOOPS.barrier.Exception.TyphoonInfoNullException;
 import com.DevOOPS.barrier.Exception.TyphoonSearchException;
 import com.DevOOPS.barrier.Mapper.AdminMapper;
@@ -33,36 +30,168 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 
-//private과 protected과 public 구분해야 함.
-@Service //Bean에 등록하는 annotation. 기본으로 싱글톤으로 등록한다 (유일하게 하나만 등록해서 공유한다)
+@Service
 @Slf4j
 public class AdminService {
-    dto dt;
     @Autowired
     AdminMapper mapper;
     String tmToday = String.valueOf(ServerTime());
     String minusTmToday = String.valueOf(MinusServerTime());
     ReportAPIdto reportAPIdto1;
-    @Value("${api.key}")
-    private String ServiceKey;
+    @Value("${api.EncodeKey}")
+    private String EncodeServiceKey;
+
+    @Value("${api.DecodeKey}")
+    private String DecodeServiceKey;
 
     @Value("${api.enterAddress}")
     private String enterAddress;
     private WebClient webClient = WebClient.create(enterAddress);
 
-    public void createAdmin(dto dt) {
-        mapper.createAdmin(dt);
+
+    public List<TypFcst> getTyphoonFcst(String getAnnounceTime, String getTyphoonSeq) {
+        List<TypFcst> TypFcstDTOList = new ArrayList<>();
+
+        System.out.print(getAnnounceTime + " + " + getTyphoonSeq);
+
+        try{
+        StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/TyphoonInfoService/getTyphoonFcst"); /*URL*/
+        urlBuilder.append("?" + URLEncoder.encode("serviceKey","UTF-8") + DecodeServiceKey); /*Service Key*/
+        urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
+        urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
+        urlBuilder.append("&" + URLEncoder.encode("dataType","UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
+        urlBuilder.append("&" + URLEncoder.encode("tmFc","UTF-8") + "=" + URLEncoder.encode(getAnnounceTime, "UTF-8")); /*발표시각(년월일시분)태풍정보서비스의 호출 결과 중 발표시간 값 참조하여 입력*/
+        urlBuilder.append("&" + URLEncoder.encode("typSeq","UTF-8") + "=" + URLEncoder.encode(getTyphoonSeq, "UTF-8")); /*태풍번호*/
+        URL url = new URL(urlBuilder.toString());
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Content-type", "application/json");
+        System.out.println("Response code: " + conn.getResponseCode());
+        BufferedReader rd;
+        if(conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
+            rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        } else {
+            rd = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+        }
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = rd.readLine()) != null) {
+            sb.append(line);
+        }
+        rd.close();
+        conn.disconnect();
+        String result;
+        result = sb.toString();
+
+        JSONParser jsonParser = new JSONParser();
+        JSONObject obj = (JSONObject) jsonParser.parse(result); //하나씩 출력. Parsing 문제.
+        JSONObject parse_response = (JSONObject) obj.get("response");
+        JSONObject parse_body = (JSONObject) parse_response.get("body");
+        JSONObject parse_items = (JSONObject) parse_body.get("items");
+        JSONArray infoArr = (JSONArray) parse_items.get("item");
+        System.out.println("infoArr Size: " + infoArr.size());
+
+        JSONObject temp = new JSONObject();
+
+        String get_dir;
+        String get_ed15;
+        double get_lat;
+        double get_lon;
+        int get_rad15;
+        String get_tm;
+        String get_tmFc;
+        int get_ws;
+            // list 추가하기.
+
+        for (int i = 0; i < infoArr.size(); i++) { //for each으로 변경 고려.
+            temp = (JSONObject) infoArr.get(i);
+            get_dir = String.valueOf(temp.get("dir"));
+            get_ed15 = String.valueOf(temp.get("ed15"));
+            get_lat = Double.parseDouble(String.valueOf(temp.get("lat")));
+            get_lon = Double.parseDouble(String.valueOf(temp.get("lon")));
+            get_rad15 = Integer.parseInt(String.valueOf(temp.get("rad15")));
+            get_tm = String.valueOf(temp.get("tm"));
+            get_tmFc = String.valueOf(temp.get("tmFc"));
+            get_ws = Integer.parseInt(String.valueOf(temp.get("ws")));
+            log.info(get_dir, get_ed15, get_lat, get_lon, get_rad15, get_tm, get_tmFc, get_ws);
+            TypFcstDTOList.add(new TypFcst(get_dir, get_ed15, get_lat, get_lon, get_rad15, get_tm, get_tmFc, get_ws));
+            System.out.println(TypFcstDTOList.toString());
+        }
+
+        } catch (Exception e) {
+            e.toString();
+        }
+        return TypFcstDTOList;
+    }
+    public String getTyphoonInfoList() throws UnsupportedEncodingException {
+        String reformData = null;
+        String returnResult = "";
+        StringBuilder sb = new StringBuilder();
+        try {
+            StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/TyphoonInfoService/getTyphoonInfoList"); /*URL*/
+            urlBuilder.append("?" + URLEncoder.encode("serviceKey","UTF-8") + DecodeServiceKey); /*Service Key*/
+            urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
+            urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
+            urlBuilder.append("&" + URLEncoder.encode("dataType","UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
+            urlBuilder.append("&" + URLEncoder.encode("tmFc","UTF-8") + "=" + URLEncoder.encode("230729", "UTF-8")); /*발표시각*/
+            URL url = new URL(urlBuilder.toString());
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Content-type", "application/json");
+            System.out.println("Response code: " + conn.getResponseCode());
+            BufferedReader rd;
+            if(conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
+                rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            } else {
+                rd = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+
+            String line;
+            while ((line = rd.readLine()) != null) {
+                sb.append(line);
+            }
+            rd.close();
+            conn.disconnect();
+
+            reformData = sb.toString();
+            //const jsonString = `{"key": "안녕하세요.\n줄을 바꾸고\n반갑습니다"}`;
+            //const replaceJsonString = jsonString.replace(/\n/g, '\\n');
+            //const jsonObj = JSON.parse(replaceJsonString);
+////            console.log(jsonObj.key);
+//            stirng s = "json 형식의 데이터 값";
+//            JSONObject jo = new JSONObject(s);
+
+//            reformData = reformData.replace("/\n/g", "\\n");
+
+            JSONParser jsonParser = new JSONParser();
+            JSONObject obj = (JSONObject) jsonParser.parse(reformData); //하나씩 출력. Parsing 문제.
+            JSONObject parse_response = (JSONObject) obj.get("response");
+            JSONObject parse_body = (JSONObject) parse_response.get("body");
+            JSONObject parse_items = (JSONObject) parse_body.get("items");
+            JSONArray infoArr = (JSONArray) parse_items.get("item");
+
+            JSONObject temp = new JSONObject();
+
+            String getAnnounceTime = null;
+            String getTyphoonSeq = null;
+
+            temp = (JSONObject) infoArr.get(0);
+
+            getAnnounceTime = String.valueOf(temp.get("announceTime"));
+            getTyphoonSeq = String.valueOf(temp.get("typhoonSeq"));
+            returnResult = getAnnounceTime + ","+getTyphoonSeq;
+            System.out.println(returnResult);
+        } catch (Exception e) {
+            log.info(e.toString());
+        }
+        return returnResult;
     }
 
-    public void deleteAdmin(String adminId) {
-        dt.getAdminId().equals(adminId);
-        mapper.deleteAdmin(adminId);
-    }
     @Async
     public StringBuilder apiServerRequest() throws TyphoonSearchException {
         try {
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList"); /*URL*/
-            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + ServiceKey); /*Service Key*/
+            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + DecodeServiceKey); /*Service Key*/
             urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
             urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
@@ -75,7 +204,6 @@ public class AdminService {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Content-type", "application/json");
-            System.out.println("Response code: " + conn.getResponseCode());
             BufferedReader rd;
             if (conn.getResponseCode() >= 200 && conn.getResponseCode() <= 300) {
                 rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -96,16 +224,15 @@ public class AdminService {
             throw new TyphoonSearchException("검색된 데이터가 없습니다.");
         }
     }
-    public List<ReportAPIdto> load_save () {//test
+
+    public List<ReportAPIdto> load_save () {
         String result = "";
         List<ReportAPIdto> reportAPIdtoList = new ArrayList<>();
 
         try {
             StringBuilder sb = new StringBuilder();
             sb = apiServerRequest();
-
             result = sb.toString();
-
             log.info(result);
 
             JSONParser jsonParser = new JSONParser();
@@ -131,8 +258,8 @@ public class AdminService {
                 String[] tokens = title.split("/");
                 String WtrWrn = tokens[0];
                 String[] WtrWrnName = WtrWrn.split(":");
-
                 tmFc = String.valueOf(tmp.get("tmFc"));
+
                 SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmm");
                 date = format.parse(tmFc);
 
@@ -140,11 +267,11 @@ public class AdminService {
                 regionData = mapper.RegionData(stnId);
 
                 log.info("region : " + regionData + "\t특보명 : " + WtrWrnName[0] + "\t특보 내용 : " + tokens[1] + "\ttmFc : " + date);
-
-                reportAPIdto1 = new ReportAPIdto(stnId, date, tmSeq, regionData, tokens[0], tokens[1]);
-//                mapper.ReportAPICall(reportAPIdto1); //mapper 클래스에 사용. //dao로 바꿔야 함.
-
                 reportAPIdtoList.add(new ReportAPIdto(stnId, date, tmSeq, regionData, WtrWrnName[0], tokens[1]));
+
+//                reportAPIdto1 = new ReportAPIdto(stnId, date, tmSeq, regionData, tokens[0], tokens[1]);
+//                mapper.ReportAPICall(reportAPIdto1);
+
             }
             /*
             {"response":{"header":{"resultCode":"00","resultMsg":"NORMAL_SERVICE"},
@@ -154,18 +281,15 @@ public class AdminService {
                     {"stnId":"184","title":"[특보] 제01-1호 : 2023.01.02.20:30 / 풍랑주의보 발표(*)","tmFc":202301022030,"tmSeq":1} ] }
                     ,"pageNo":1,"numOfRows":10,"totalCount":3}}}
              */
-
         } catch (Exception e) {
             log.info(e.toString());
         }
         return reportAPIdtoList;
-    } //to FE
+    }
 
 
-    //to IoT
 //    @Scheduled(fixedDelay = 10000)
     public WallDTO IoTReportAPI() {
-        System.out.println("시작합니다");
         String result = "";
         String excludeWord = "호우";
         String Activated = "발표";
@@ -181,7 +305,6 @@ public class AdminService {
             log.info(sb.toString());
             result = sb.toString();
 
-            //Domain
             JSONParser jsonParser = new JSONParser();
             JSONObject obj = (JSONObject) jsonParser.parse(result);
             JSONObject parse_response = (JSONObject) obj.get("response");
@@ -189,7 +312,6 @@ public class AdminService {
             JSONObject parse_items = (JSONObject) parse_body.get("items");
             JSONArray infoArr = (JSONArray) parse_items.get("item");
             log.info("itemResult" + infoArr);
-
 
             JSONObject tmp;
             wallDTOList = new ArrayList<WallDTO>();
@@ -205,10 +327,6 @@ public class AdminService {
                 } else if (title.contains(excludeWord) && title.contains(Deactivated)) {
                     wallDTOList.add(new WallDTO(false, true, stnId));
                 } else continue;
-                String tmFc = String.valueOf(tmp.get("tmFc"));
-                SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmm");
-                Date date = format.parse(tmFc);
-                int tmSeq = Integer.parseInt(String.valueOf(tmp.get("tmSeq")));
             }
 
             Collections.reverse(wallDTOList); //오래된 날짜부터 최신 날짜 순.
@@ -238,7 +356,7 @@ public class AdminService {
         String resultTypPower = "";
         try {
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/TyphoonInfoService/getTyphoonInfo"); /*URL*/
-            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + ServiceKey); /*Service Key*/
+            urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + DecodeServiceKey); /*Service Key*/
             urlBuilder.append("&" + URLEncoder.encode("pageNo", "UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
             urlBuilder.append("&" + URLEncoder.encode("numOfRows", "UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("dataType", "UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/

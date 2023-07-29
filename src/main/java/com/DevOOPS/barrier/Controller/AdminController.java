@@ -1,6 +1,7 @@
 package com.DevOOPS.barrier.Controller;
 
 import com.DevOOPS.barrier.DTO.ReportAPIdto;
+import com.DevOOPS.barrier.DTO.TypFcst;
 import com.DevOOPS.barrier.DTO.TyphoonInfoDTO;
 import com.DevOOPS.barrier.DTO.WallDTO;
 import com.DevOOPS.barrier.Exception.TyphoonInfoNullException;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +24,16 @@ import java.util.List;
 public class AdminController {
     @Autowired
     AdminService adminService;
-
+    @GetMapping("/test")
+    public Message test() throws UnsupportedEncodingException {
+        List<TypFcst> getTypFcstList = new ArrayList<>();
+        String getTypList = adminService.getTyphoonInfoList();
+        String[] List = getTypList.split(",");
+        System.out.println(List[0] +"," + List[1]);
+        getTypFcstList = adminService.getTyphoonFcst(List[0], List[1]);
+        Message message= new Message(StatusEnum.OK, "성공", getTypFcstList);
+        return message;
+    }
     @GetMapping("/load") //예 특보 test test
     public Message postReportAPI() throws TyphoonSearchException {
         List<ReportAPIdto> reportAPIdtoResultList = new ArrayList<>();
