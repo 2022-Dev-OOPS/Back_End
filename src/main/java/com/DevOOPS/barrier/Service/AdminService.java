@@ -29,6 +29,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import static java.lang.Math.*;
+
 
 @Service
 @Slf4j
@@ -46,8 +48,38 @@ public class AdminService {
 
     @Value("${api.enterAddress}")
     private String enterAddress;
+    private double[] wallLatLon = new double[] { 35.1516053, 129.1170532 };
     private WebClient webClient = WebClient.create(enterAddress);
 
+    private static double deg2rad(double deg) {
+        return (deg * Math.PI / 180.0);
+    }
+
+    // This function converts radians to decimal degrees
+    private static double rad2deg(double rad) {
+        return (rad * 180 / Math.PI);
+    }
+
+    public boolean wallActivation(double wallLatitude, double wallLongtitude, double typLatitude, double typLongtitude, int rad15) {
+        double theta = wallLongtitude - typLongtitude;
+        double dist = Math.sin(deg2rad(wallLatitude)) * Math.sin(deg2rad(typLatitude)) + Math.cos(deg2rad(wallLatitude  )) * Math.cos(deg2rad(typLatitude)) * Math.cos(deg2rad(theta));
+
+        dist = Math.acos(dist);
+        dist = rad2deg(dist);
+        dist = dist * 60 * 1.1515;
+
+        dist = dist * 1.609344;
+
+
+        if (rad15 >= dist) {
+            System.out.println("태풍 현 시점 초속 15m/s의 영향 범위 : " + rad15 + " dist : " + dist + "영향 범위 안에 있습니다");
+            return true;
+        }
+        else {
+            System.out.println("태풍 현 시점 초속 15m/s의 영향 범위 : " + rad15 + " dist : " + dist + "영향 범위 안에 없습니다");
+            return false;
+        }
+    }
 
     public List<TypFcst> getTyphoonFcst(String getAnnounceTime, String getTyphoonSeq) {
         List<TypFcst> TypFcstDTOList = new ArrayList<>();
@@ -95,9 +127,9 @@ public class AdminService {
 
         String get_dir;
         String get_ed15;
-        double get_lat;
-        double get_lon;
-        int get_rad15;
+        double get_lat = -1;
+        double get_lon = -1;
+        int get_rad15 = -1;
         String get_tm;
         String get_tmFc;
         int get_ws;
@@ -117,6 +149,10 @@ public class AdminService {
             TypFcstDTOList.add(new TypFcst(get_dir, get_ed15, get_lat, get_lon, get_rad15, get_tm, get_tmFc, get_ws));
             System.out.println(TypFcstDTOList.toString());
         }
+
+        boolean selectWallActivation = wallActivation(35.1516053, 129.1170532, get_lat, get_lon, get_rad15);
+        System.out.println(selectWallActivation);
+
 
         } catch (Exception e) {
             e.toString();
