@@ -207,7 +207,6 @@ public class AdminService {
             JSONArray infoArr = (JSONArray) parse_items.get("item");
 
             JSONObject temp = new JSONObject();
-
             String getAnnounceTime = null;
             String getTyphoonSeq = null;
 
