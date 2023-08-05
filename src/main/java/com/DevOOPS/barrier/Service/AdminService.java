@@ -55,19 +55,18 @@ public class AdminService {
         return (deg * Math.PI / 180.0);
     }
 
-    // This function converts radians to decimal degrees
     private static double rad2deg(double rad) {
         return (rad * 180 / Math.PI);
     }
 
     public boolean wallActivation(double wallLatitude, double wallLongtitude, double typLatitude, double typLongtitude, int rad15) {
         double theta = wallLongtitude - typLongtitude;
-        double dist = Math.sin(deg2rad(wallLatitude)) * Math.sin(deg2rad(typLatitude)) + Math.cos(deg2rad(wallLatitude  )) * Math.cos(deg2rad(typLatitude)) * Math.cos(deg2rad(theta));
+        double dist = Math.sin(deg2rad(wallLatitude)) * Math.sin(deg2rad(typLatitude)) + Math.cos(deg2rad(wallLatitude  ))
+                * Math.cos(deg2rad(typLatitude)) * Math.cos(deg2rad(theta));
 
         dist = Math.acos(dist);
         dist = rad2deg(dist);
         dist = dist * 60 * 1.1515;
-
         dist = dist * 1.609344;
 
 
@@ -116,15 +115,14 @@ public class AdminService {
         result = sb.toString();
 
         JSONParser jsonParser = new JSONParser();
-        JSONObject obj = (JSONObject) jsonParser.parse(result); //하나씩 출력. Parsing 문제.
+        JSONObject obj = (JSONObject) jsonParser.parse(result);
         JSONObject parse_response = (JSONObject) obj.get("response");
         JSONObject parse_body = (JSONObject) parse_response.get("body");
         JSONObject parse_items = (JSONObject) parse_body.get("items");
         JSONArray infoArr = (JSONArray) parse_items.get("item");
-        System.out.println("infoArr Size: " + infoArr.size());
 
         JSONObject temp = new JSONObject();
-
+        JSONObject tempGetTyphoonInfo = new JSONObject();
         String get_dir;
         String get_ed15;
         double get_lat = -1;
@@ -134,6 +132,12 @@ public class AdminService {
         String get_tmFc;
         int get_ws;
             // list 추가하기.
+        tempGetTyphoonInfo = (JSONObject) infoArr.get(0);
+        get_lat = Double.parseDouble(String.valueOf(tempGetTyphoonInfo.get("lat")));
+        get_lon = Double.parseDouble(String.valueOf(tempGetTyphoonInfo.get("lon")));
+        get_rad15 = Integer.parseInt(String.valueOf(tempGetTyphoonInfo.get("rad15")));
+        boolean selectWallActivation = wallActivation(35.1516053, 129.1170532, get_lat, get_lon, get_rad15);
+        System.out.println(selectWallActivation);
 
         for (int i = 0; i < infoArr.size(); i++) { //for each으로 변경 고려.
             temp = (JSONObject) infoArr.get(i);
@@ -147,13 +151,7 @@ public class AdminService {
             get_ws = Integer.parseInt(String.valueOf(temp.get("ws")));
             log.info(get_dir, get_ed15, get_lat, get_lon, get_rad15, get_tm, get_tmFc, get_ws);
             TypFcstDTOList.add(new TypFcst(get_dir, get_ed15, get_lat, get_lon, get_rad15, get_tm, get_tmFc, get_ws));
-            System.out.println(TypFcstDTOList.toString());
         }
-
-        boolean selectWallActivation = wallActivation(35.1516053, 129.1170532, get_lat, get_lon, get_rad15);
-        System.out.println(selectWallActivation);
-
-
         } catch (Exception e) {
             e.toString();
         }
@@ -169,7 +167,7 @@ public class AdminService {
             urlBuilder.append("&" + URLEncoder.encode("pageNo","UTF-8") + "=" + URLEncoder.encode("1", "UTF-8")); /*페이지번호*/
             urlBuilder.append("&" + URLEncoder.encode("numOfRows","UTF-8") + "=" + URLEncoder.encode("10", "UTF-8")); /*한 페이지 결과 수*/
             urlBuilder.append("&" + URLEncoder.encode("dataType","UTF-8") + "=" + URLEncoder.encode("JSON", "UTF-8")); /*요청자료형식(XML/JSON)Default: XML*/
-            urlBuilder.append("&" + URLEncoder.encode("tmFc","UTF-8") + "=" + URLEncoder.encode("230729", "UTF-8")); /*발표시각*/
+            urlBuilder.append("&" + URLEncoder.encode("tmFc","UTF-8") + "=" + URLEncoder.encode("230804", "UTF-8")); /*발표시각*/
             URL url = new URL(urlBuilder.toString());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
@@ -190,14 +188,6 @@ public class AdminService {
             conn.disconnect();
 
             reformData = sb.toString();
-            //const jsonString = `{"key": "안녕하세요.\n줄을 바꾸고\n반갑습니다"}`;
-            //const replaceJsonString = jsonString.replace(/\n/g, '\\n');
-            //const jsonObj = JSON.parse(replaceJsonString);
-////            console.log(jsonObj.key);
-//            stirng s = "json 형식의 데이터 값";
-//            JSONObject jo = new JSONObject(s);
-
-//            reformData = reformData.replace("/\n/g", "\\n");
 
             JSONParser jsonParser = new JSONParser();
             JSONObject obj = (JSONObject) jsonParser.parse(reformData); //하나씩 출력. Parsing 문제.
@@ -207,7 +197,6 @@ public class AdminService {
             JSONArray infoArr = (JSONArray) parse_items.get("item");
 
             JSONObject temp = new JSONObject();
-
             String getAnnounceTime = null;
             String getTyphoonSeq = null;
 
@@ -386,7 +375,6 @@ public class AdminService {
         return wallDTOtemp;
     }
 
-    @Async
     public  List<TyphoonInfoDTO>  PostTyphoonInfo() throws TyphoonSearchException, TyphoonInfoNullException {
         List<TyphoonInfoDTO> typhoonInfoDTOList;
         String resultTypPower = "";
@@ -421,16 +409,10 @@ public class AdminService {
             String TyphoonInfoResult = sb.toString();
             JSONParser jsonParser = new JSONParser();
             JSONObject obj = (JSONObject) jsonParser.parse(TyphoonInfoResult);
-            log.warn("result : " + TyphoonInfoResult);
-            log.warn("obj : " + obj);
             JSONObject parse_response = (JSONObject) obj.get("response");
-            log.warn("response : " + parse_response);
             JSONObject parse_body = (JSONObject) parse_response.get("body");
-            log.warn("body : " + parse_body);
             JSONObject parse_items = (JSONObject) parse_body.get("items");
-            log.info("parse_items" + parse_items);
             JSONArray infoArr = (JSONArray) parse_items.get("item");
-            log.info("itemResult" + infoArr);
             JSONObject tmp;
             typhoonInfoDTOList = new ArrayList<>();
             for (int i = 0; i < infoArr.size(); i++) {
