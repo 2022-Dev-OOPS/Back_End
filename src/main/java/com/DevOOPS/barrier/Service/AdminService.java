@@ -40,6 +40,7 @@ public class AdminService {
     String tmToday = String.valueOf(ServerTime());
     String minusTmToday = String.valueOf(MinusServerTime());
     ReportAPIdto reportAPIdto1;
+    TyphoonInfoDTO reportTypDTO;
     @Value("${api.EncodeKey}")
     private String EncodeServiceKey;
 
@@ -131,6 +132,11 @@ public class AdminService {
         String get_tm;
         String get_tmFc;
         int get_ws;
+        double get_radPr;
+        int get_ps;
+        String get_fcLocKo;
+        int get_sp;
+        int get_seq;
             // list 추가하기.
         tempGetTyphoonInfo = (JSONObject) infoArr.get(0);
         get_lat = Double.parseDouble(String.valueOf(tempGetTyphoonInfo.get("lat")));
@@ -141,16 +147,23 @@ public class AdminService {
 
         for (int i = 0; i < infoArr.size(); i++) { //for each으로 변경 고려.
             temp = (JSONObject) infoArr.get(i);
-            get_dir = String.valueOf(temp.get("dir"));
-            get_ed15 = String.valueOf(temp.get("ed15"));
+            get_tm = String.valueOf(temp.get("tm"));
             get_lat = Double.parseDouble(String.valueOf(temp.get("lat")));
             get_lon = Double.parseDouble(String.valueOf(temp.get("lon")));
-            get_rad15 = Integer.parseInt(String.valueOf(temp.get("rad15")));
-            get_tm = String.valueOf(temp.get("tm"));
-            get_tmFc = String.valueOf(temp.get("tmFc"));
+            get_radPr = Double.parseDouble(String.valueOf(temp.get("radPr")));
             get_ws = Integer.parseInt(String.valueOf(temp.get("ws")));
-            log.info(get_dir, get_ed15, get_lat, get_lon, get_rad15, get_tm, get_tmFc, get_ws);
-            TypFcstDTOList.add(new TypFcst(get_dir, get_ed15, get_lat, get_lon, get_rad15, get_tm, get_tmFc, get_ws));
+            get_ps = Integer.parseInt(String.valueOf(temp.get("ps")));
+            get_fcLocKo = String.valueOf(temp.get("fcLocKo"));
+            get_rad15 = Integer.parseInt(String.valueOf(temp.get("rad15")));
+            get_dir = String.valueOf(temp.get("dir"));
+            get_sp = Integer.parseInt(String.valueOf(temp.get("sp")));
+            get_tmFc = String.valueOf(temp.get("tmFc"));
+            get_seq = Integer.parseInt(String.valueOf(temp.get("seq")));
+
+            ReportTypPredictDTO reportTypPredictDTO;
+            reportTypPredictDTO = new ReportTypPredictDTO(get_tm, get_lat, get_lon, get_radPr, get_ws, get_ps,
+                    get_fcLocKo, get_rad15, get_dir, get_sp, get_tmFc, get_seq);
+
         }
         } catch (Exception e) {
             e.toString();
@@ -294,8 +307,8 @@ public class AdminService {
                 log.info("region : " + regionData + "\t특보명 : " + WtrWrnName[0] + "\t특보 내용 : " + tokens[1] + "\ttmFc : " + date);
                 reportAPIdtoList.add(new ReportAPIdto(stnId, date, tmSeq, regionData, WtrWrnName[0], tokens[1]));
 
-//                reportAPIdto1 = new ReportAPIdto(stnId, date, tmSeq, regionData, tokens[0], tokens[1]);
-//                mapper.ReportAPICall(reportAPIdto1);
+                reportAPIdto1 = new ReportAPIdto(stnId, date, tmSeq, regionData, tokens[0], tokens[1]);
+                mapper.ReportAPICall(reportAPIdto1);
 
             }
             /*
@@ -374,10 +387,8 @@ public class AdminService {
         }
         return wallDTOtemp;
     }
-
-    public  List<TyphoonInfoDTO>  PostTyphoonInfo() throws TyphoonSearchException, TyphoonInfoNullException {
-        List<TyphoonInfoDTO> typhoonInfoDTOList;
-        String resultTypPower = "";
+//    @Scheduled(fixedDelay = 10000)
+    public  TyphoonInfoDTO  PostTyphoonInfo() throws TyphoonSearchException, TyphoonInfoNullException {
         try {
             StringBuilder urlBuilder = new StringBuilder("http://apis.data.go.kr/1360000/TyphoonInfoService/getTyphoonInfo"); /*URL*/
             urlBuilder.append("?" + URLEncoder.encode("serviceKey", "UTF-8") + DecodeServiceKey); /*Service Key*/
@@ -414,34 +425,26 @@ public class AdminService {
             JSONObject parse_items = (JSONObject) parse_body.get("items");
             JSONArray infoArr = (JSONArray) parse_items.get("item");
             JSONObject tmp;
-            typhoonInfoDTOList = new ArrayList<>();
-            for (int i = 0; i < infoArr.size(); i++) {
-                tmp = (JSONObject) infoArr.get(i);
-                String img = String.valueOf(tmp.get("img"));
-                String tmFc = String.valueOf(tmp.get("tmFc"));
-                String typSeq = String.valueOf(tmp.get("typSeq"));
-                String tmSeq = String.valueOf(tmp.get("tmSeq"));
-                String typTm = String.valueOf(tmp.get("typTm"));
-                float typLat = Float.parseFloat(String.valueOf(tmp.get("typLat")));
-                float typLon = Float.parseFloat(String.valueOf(tmp.get("typLon")));
-                String typLoc = String.valueOf(tmp.get("typLoc"));
-                String typDir = String.valueOf(tmp.get("typDir"));
-                float typSp = Float.parseFloat(String.valueOf(tmp.get("typSp")));
-                float typPs = Float.parseFloat(String.valueOf(tmp.get("typPs")));
-                float typWs = Float.parseFloat(String.valueOf(tmp.get("typWs")));
-                float typ15 = Float.parseFloat(String.valueOf(tmp.get("typ15")));
-                float typ25 = Float.parseFloat(String.valueOf(tmp.get("typ25")));
-                String typName = String.valueOf(tmp.get("typName"));
-                String typEn = String.valueOf(tmp.get("typEn"));
-                String rem = String.valueOf(tmp.get("rem"));
-                String other = String.valueOf(tmp.get("other"));
-                log.info("배열의 " + i + "번째 요소");
-                typhoonInfoDTOList.add(new TyphoonInfoDTO(img, tmFc, typSeq, tmSeq, typTm, typLat, typLon, typLoc, typDir, typSp, typPs,
-                        typWs, typ15, typ25, typName, typEn, rem, other));
-            }
-            for (TyphoonInfoDTO typhoonInfoDTO : typhoonInfoDTOList) {
-                log.info(typhoonInfoDTO.toString());
-            }
+            tmp = (JSONObject) infoArr.get(0);
+            String tmFc = String.valueOf(tmp.get("tmFc"));
+            String typSeq = String.valueOf(tmp.get("typSeq"));
+            String tmSeq = String.valueOf(tmp.get("tmSeq"));
+            String typTm = String.valueOf(tmp.get("typTm"));
+            double typLat = Float.parseFloat(String.valueOf(tmp.get("typLat")));
+            double typLon = Float.parseFloat(String.valueOf(tmp.get("typLon")));
+            String typLoc = String.valueOf(tmp.get("typLoc"));
+            String typDir = String.valueOf(tmp.get("typDir"));
+            double typSp = Float.parseFloat(String.valueOf(tmp.get("typSp")));
+            double typPs = Float.parseFloat(String.valueOf(tmp.get("typPs")));
+            double typWs = Float.parseFloat(String.valueOf(tmp.get("typWs")));
+            double typ15 = Float.parseFloat(String.valueOf(tmp.get("typ15")));
+            double typ25 = Float.parseFloat(String.valueOf(tmp.get("typ25")));
+            String typName = String.valueOf(tmp.get("typName"));
+            String typEn = String.valueOf(tmp.get("typEn"));
+            reportTypDTO = new TyphoonInfoDTO(tmFc, typSeq, tmSeq, typTm, typLat, typLon, typLoc, typDir, typSp, typPs,
+                        typWs, typ15, typ25, typName, typEn);
+            mapper.ReportTypData(reportTypDTO);
+
 //            Mono<String> response = webClient.post()
 //                    .uri("/test")
 //                    .contentType(MediaType.APPLICATION_JSON)
@@ -451,7 +454,7 @@ public class AdminService {
 //            String responseBody = response.block();
 //            log.info(responseBody);
 
-            return typhoonInfoDTOList;
+            return reportTypDTO;
         } catch (ProtocolException e) {
             throw new RuntimeException(e);
         } catch (MalformedURLException e) {
