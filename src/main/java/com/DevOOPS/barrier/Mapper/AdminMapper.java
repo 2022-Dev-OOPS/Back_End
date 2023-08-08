@@ -1,6 +1,7 @@
 package com.DevOOPS.barrier.Mapper;
 
 import com.DevOOPS.barrier.DTO.ReportAPIdto;
+import com.DevOOPS.barrier.DTO.TyphoonInfoDTO;
 import com.DevOOPS.barrier.DTO.dto;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -15,4 +16,6 @@ public interface AdminMapper {
     public void ReportAPICall (ReportAPIdto apIdto);
 
     public String RegionData (int stnId);
+
+    public void ReportTypData (TyphoonInfoDTO typhoonInfoDTO);
 }
